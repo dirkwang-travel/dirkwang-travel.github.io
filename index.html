@@ -432,9 +432,13 @@
                     </div>
                 </div>
 
-                <div class="absolute top-6 right-6 z-50">
+                <!-- [修改] 右上角操作區 -->
+                <div class="absolute top-6 right-6 z-50 flex flex-col gap-3">
                      <button @click="showSettings = true" class="w-10 h-10 bg-white/80 hover:bg-white text-stone-600 rounded-full shadow-md backdrop-blur-sm flex items-center justify-center transition border border-gray-200 hover:scale-105 active:scale-95" title="設定">
                         <i class="ph-bold ph-gear text-xl"></i>
+                     </button>
+                     <button @click="downloadBookshelf" class="w-10 h-10 bg-white/80 hover:bg-white text-blue-600 rounded-full shadow-md backdrop-blur-sm flex items-center justify-center transition border border-gray-200 hover:scale-105 active:scale-95" title="從雲端下載書架">
+                        <i class="ph-bold ph-cloud-arrow-down text-xl"></i>
                      </button>
                 </div>
             </div>
@@ -524,7 +528,7 @@
                                     <div :key="currentDayIdx" class="flex-1">
                                         <!-- 標題 -->
                                         <div class="flex justify-between items-end mb-6 ml-6 sm:ml-0 border-b-2 border-gray-200 pb-2">
-                                            <div class="memo-day inline-block px-4 py-2 shadow-sm">
+                                            <div class="memo-day inline-block px-4 py-2 shadow-sm max-w-[85%]">
                                                 <div class="flex items-baseline gap-2">
                                                     <span class="font-bold text-2xl text-gray-700 font-hand">Day {{ currentDayIdx + 1 }}</span>
                                                     <input v-model="days[currentDayIdx].date" class="bg-transparent border-b border-gray-300 w-32 font-hand text-sm focus:outline-none text-gray-500" placeholder="日期 (MM/DD)">
@@ -534,7 +538,7 @@
                                         </div>
 
                                         <!-- 住宿區 (飛航/住宿 切換) -->
-                                        <div v-if="days[currentDayIdx].accommodationType === 'flight'" class="ml-8 mb-6 boarding-pass rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition relative p-0 z-10">
+                                        <div v-if="days[currentDayIdx].accommodationType === 'flight'" class="ml-8 mb-6 boarding-pass rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition relative p-0 z-10 max-w-[85%]">
                                             <div @click="toggleAccommodationType(currentDayIdx)" class="absolute -left-3 top-4 w-6 h-6 bg-blue-50 hover:bg-blue-100 rounded-full flex items-center justify-center text-blue-400 hover:text-blue-600 border border-blue-100 shadow-sm z-50 cursor-pointer transition" title="切換住宿/機上過夜">
                                                 <i class="ph-fill ph-airplane-tilt"></i>
                                             </div>
@@ -590,7 +594,7 @@
                                         </div>
 
                                         <!-- 一般住宿模式 (Memo Style) -->
-                                        <div v-else class="memo-accommodation ml-8 mb-6 p-4 z-10">
+                                        <div v-else class="memo-accommodation ml-8 mb-6 p-4 z-10 max-w-[85%]">
                                             <div @click="toggleAccommodationType(currentDayIdx)" class="absolute -left-3 top-4 w-6 h-6 bg-blue-50 hover:bg-blue-100 rounded-full flex items-center justify-center text-blue-400 hover:text-blue-600 border border-blue-100 shadow-sm z-50 cursor-pointer transition" title="切換住宿/機上過夜">
                                                 <i class="ph-fill ph-bed"></i>
                                             </div>
@@ -726,7 +730,7 @@
                                                 </div>
                                             </div>
                                             <!-- [修改] 新增按鈕：淡米灰色虛線紙條樣式 -->
-                                            <button @click="addItem(currentDayIdx)" class="memo-add ml-4 flex items-center gap-2 text-sm font-bold font-hand group py-2 w-32 justify-center">
+                                            <button @click="addItem(currentDayIdx)" class="memo-add ml-4 flex items-center gap-2 text-sm font-bold font-hand group py-2 w-32 justify-center max-w-[85%]">
                                                 <i class="ph-bold ph-plus"></i>
                                                 新增行程
                                             </button>
@@ -914,6 +918,14 @@ function doPost(e) {
                             <input v-model="googleScriptUrl" placeholder="https://script.google.com/macros/s/..../exec" class="w-full bg-gray-50 border border-gray-300 rounded-md px-3 py-2 text-xs font-mono text-gray-600 focus:border-gray-500 outline-none">
                             <p class="text-[10px] text-gray-400">若留空則使用瀏覽器暫存 (Local Storage)。</p>
                         </div>
+
+                        <!-- [新增] 雲端書架同步按鈕 -->
+                        <div v-if="googleScriptUrl" class="mt-4 pt-4 border-t border-gray-200">
+                            <button @click="downloadBookshelf" class="w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 rounded-lg font-bold transition text-sm border border-blue-200">
+                                <i class="ph-bold ph-cloud-arrow-down"></i> 從雲端下載書架
+                            </button>
+                            <p class="text-[10px] text-gray-400 mt-1 text-center">請先確認上方網址正確，且該試算表中有 'INDEX' 分頁。</p>
+                        </div>
                     </div>
 
                     <div v-if="showSetupModal" class="pt-4 border-t border-gray-200">
@@ -1070,6 +1082,19 @@ function doPost(e) {
                     if (obj.arrivalOffset > 2) obj.arrivalOffset = 0;
                 };
 
+                // [新增] 照片上傳邏輯
+                const handlePhotoUpload = (event, target, key) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            target[key] = e.target.result; // Store as Base64
+                            saveData();
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                };
+
                 onMounted(() => {
                     const savedList = localStorage.getItem('travel_notebook_index');
                     const savedUrl = localStorage.getItem('travel_notebook_gas_url');
@@ -1175,6 +1200,35 @@ function doPost(e) {
                     } else { saveStatus.value = '已存於本機'; }
                     setTimeout(() => { saveStatus.value = ''; isSaving.value = false; }, 2000);
                 };
+                
+                // [新增] 從雲端下載書架
+                const downloadBookshelf = async () => {
+                    if (!googleScriptUrl.value) return;
+                    isLoading.value = true;
+                    try {
+                        const res = await fetch(`${googleScriptUrl.value}?sheet=INDEX`);
+                        const json = await res.json();
+                        if (Array.isArray(json) && json.length > 0) {
+                            // 解析並覆蓋 tripList
+                            tripList.value = json.map(row => ({
+                                id: row.ID,
+                                destination: row.Destination,
+                                startDate: row.StartDate,
+                                daysCount: row.Days,
+                                color: row.Color
+                            }));
+                            localStorage.setItem('travel_notebook_index', JSON.stringify(tripList.value));
+                            alert('書架已從雲端同步完成！');
+                        } else {
+                            alert('雲端找不到書架資料 (INDEX)，請確認您的 Google Sheet。');
+                        }
+                    } catch(e) {
+                        console.error(e);
+                        alert('下載失敗，請檢查網址或網路連線。');
+                    } finally {
+                        isLoading.value = false;
+                    }
+                };
 
                 const flattenAppDataToSheet = (data) => {
                     const rows = [];
@@ -1184,10 +1238,8 @@ function doPost(e) {
                     const checklistJson = JSON.stringify(checklistPayload);
                     
                     data.days.forEach((day, dIdx) => {
-                        // Handle flight mode in stay
                         let stayStr = day.accommodation || '';
                         if (day.accommodationType === 'flight') {
-                            // [修改] 儲存時加入抵達時間和 offset
                             stayStr = `[FLIGHT]${day.airline || ''}|${day.flightNo || ''}|${day.origin || ''}|${day.destination || ''}|${day.flightDuration || ''}|${day.time || ''}|${day.arrivalTime || ''}|${day.arrivalOffset || 0}`;
                         }
 
@@ -1198,7 +1250,6 @@ function doPost(e) {
                                 let activity = item.activity;
                                 let loc = item.location;
                                 if (item.type === 'flight') {
-                                    // [修改] 儲存時加入抵達時間和 offset
                                     activity = `Flight: ${item.airline} ${item.flightNo} | Dur: ${item.flightDuration} | Arr: ${item.arrivalTime}${item.arrivalOffset ? ' (+' + item.arrivalOffset + ')' : ''}`;
                                     loc = `${item.origin} -> ${item.destination}`;
                                 }
@@ -1244,7 +1295,7 @@ function doPost(e) {
                                 f_dur = parts[4] || '';
                                 f_time = parts[5] || '';
                                 f_arr = parts[6] || '';
-                                f_off = parseInt(parts[7] || 0); // [修改] 讀取 offset
+                                f_off = parseInt(parts[7] || 0); 
                                 accName = f_airline + ' ' + f_no; 
                             }
 
@@ -1260,7 +1311,7 @@ function doPost(e) {
                                 flightDuration: f_dur,
                                 time: f_time,
                                 arrivalTime: f_arr,
-                                arrivalOffset: f_off, // [修改]
+                                arrivalOffset: f_off,
                                 items: [] 
                             }; 
                         }
@@ -1285,7 +1336,6 @@ function doPost(e) {
                                 item.flightNo = flightDetails[1] || '';
                                 item.flightDuration = (durPart[1] || '').trim();
                                 
-                                // [修改] 解析抵達時間和 offset: "12:30 (+1)"
                                 const rawArr = (arrPart[1] || '').trim();
                                 const match = rawArr.match(/(\d{1,2}:\d{2})\s*(?:\(\+(\d+)\))?/);
                                 if (match) {
@@ -1581,7 +1631,7 @@ function doPost(e) {
                     viewMode, changeViewMode, participants, tripTotalExpense, currentDayLocations,
                     checklist, checklistData, defaultChecklist: DEFAULT_CHECKLIST_STRUCTURE, toggleCheckItem, categoryExpenses,
                     isChecklistEditing, toggleChecklistEdit, addChecklistItem, removeChecklistItem, addChecklistCategory, removeChecklistCategory,
-                    getCategoryName, toggleAccommodationType, cycleArrivalOffset
+                    getCategoryName, toggleAccommodationType, cycleArrivalOffset, downloadBookshelf
                 };
             }
         }).mount('#app');
