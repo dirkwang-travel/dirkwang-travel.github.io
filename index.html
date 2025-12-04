@@ -439,6 +439,10 @@
                      <button @click="downloadBookshelf" class="w-10 h-10 bg-white/80 hover:bg-white text-blue-600 rounded-full shadow-md backdrop-blur-sm flex items-center justify-center transition border border-gray-200 hover:scale-105 active:scale-95" title="從雲端下載書架">
                         <i class="ph-bold ph-cloud-arrow-down text-xl"></i>
                      </button>
+                     <!-- [新增] 上傳書架按鈕 -->
+                     <button @click="uploadBookshelf" class="w-10 h-10 bg-white/80 hover:bg-white text-green-600 rounded-full shadow-md backdrop-blur-sm flex items-center justify-center transition border border-gray-200 hover:scale-105 active:scale-95" title="上傳本機書架到雲端">
+                        <i class="ph-bold ph-cloud-arrow-up text-xl"></i>
+                     </button>
                 </div>
             </div>
         </transition>
@@ -919,11 +923,16 @@ function doPost(e) {
                         </div>
 
                         <!-- [新增] 雲端書架同步按鈕 -->
-                        <div v-if="googleScriptUrl" class="mt-4 pt-4 border-t border-gray-200">
+                        <div v-if="googleScriptUrl" class="mt-4 pt-4 border-t border-gray-200 flex flex-col gap-2">
+                            <!-- 上傳按鈕 -->
+                            <button @click="uploadBookshelf" class="w-full flex items-center justify-center gap-2 bg-green-50 hover:bg-green-100 text-green-600 py-2 rounded-lg font-bold transition text-sm border border-green-200">
+                                <i class="ph-bold ph-cloud-arrow-up"></i> 上傳本機書架到雲端
+                            </button>
+                            <!-- 下載按鈕 -->
                             <button @click="downloadBookshelf" class="w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 rounded-lg font-bold transition text-sm border border-blue-200">
                                 <i class="ph-bold ph-cloud-arrow-down"></i> 從雲端下載書架
                             </button>
-                            <p class="text-[10px] text-gray-400 mt-1 text-center">請先確認上方網址正確，且該試算表中有 'INDEX' 分頁。</p>
+                            <p class="text-[10px] text-gray-400 mt-1 text-center">若雲端沒有 INDEX 分頁，請先點擊「上傳」建立。</p>
                         </div>
                     </div>
 
@@ -1081,19 +1090,6 @@ function doPost(e) {
                     if (obj.arrivalOffset > 2) obj.arrivalOffset = 0;
                 };
 
-                // [新增] 照片上傳邏輯
-                const handlePhotoUpload = (event, target, key) => {
-                    const file = event.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            target[key] = e.target.result; // Store as Base64
-                            saveData();
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                };
-
                 onMounted(() => {
                     const savedList = localStorage.getItem('travel_notebook_index');
                     const savedUrl = localStorage.getItem('travel_notebook_gas_url');
@@ -1200,6 +1196,32 @@ function doPost(e) {
                     setTimeout(() => { saveStatus.value = ''; isSaving.value = false; }, 2000);
                 };
                 
+                // [新增] 上傳書架到雲端
+                const uploadBookshelf = async () => {
+                    if (!googleScriptUrl.value) {
+                        alert('請先設定 Google Apps Script 網址');
+                        return;
+                    }
+                    isLoading.value = true;
+                    try {
+                        const indexData = tripList.value.map(t => [t.id, t.destination, t.startDate, t.daysCount, t.color]);
+                        indexData.unshift(['ID', 'Destination', 'StartDate', 'Days', 'Color']);
+                        
+                        await fetch(googleScriptUrl.value, { 
+                            method: 'POST', 
+                            mode: 'no-cors', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ sheetName: 'INDEX', data: indexData }) 
+                        });
+                        alert('書架目錄已上傳！');
+                    } catch(e) {
+                        console.error(e);
+                        alert('上傳失敗');
+                    } finally {
+                        isLoading.value = false;
+                    }
+                };
+                
                 // [新增] 從雲端下載書架
                 const downloadBookshelf = async () => {
                     if (!googleScriptUrl.value) return;
@@ -1237,6 +1259,7 @@ function doPost(e) {
                     const checklistJson = JSON.stringify(checklistPayload);
                     
                     data.days.forEach((day, dIdx) => {
+                        // Handle flight mode in stay
                         let stayStr = day.accommodation || '';
                         if (day.accommodationType === 'flight') {
                             stayStr = `[FLIGHT]${day.airline || ''}|${day.flightNo || ''}|${day.origin || ''}|${day.destination || ''}|${day.flightDuration || ''}|${day.time || ''}|${day.arrivalTime || ''}|${day.arrivalOffset || 0}`;
@@ -1249,6 +1272,7 @@ function doPost(e) {
                                 let activity = item.activity;
                                 let loc = item.location;
                                 if (item.type === 'flight') {
+                                    // [修改] 儲存時加入抵達時間和 offset
                                     activity = `Flight: ${item.airline} ${item.flightNo} | Dur: ${item.flightDuration} | Arr: ${item.arrivalTime}${item.arrivalOffset ? ' (+' + item.arrivalOffset + ')' : ''}`;
                                     loc = `${item.origin} -> ${item.destination}`;
                                 }
@@ -1294,7 +1318,7 @@ function doPost(e) {
                                 f_dur = parts[4] || '';
                                 f_time = parts[5] || '';
                                 f_arr = parts[6] || '';
-                                f_off = parseInt(parts[7] || 0); 
+                                f_off = parseInt(parts[7] || 0); // [修改] 讀取 offset
                                 accName = f_airline + ' ' + f_no; 
                             }
 
@@ -1310,7 +1334,7 @@ function doPost(e) {
                                 flightDuration: f_dur,
                                 time: f_time,
                                 arrivalTime: f_arr,
-                                arrivalOffset: f_off,
+                                arrivalOffset: f_off, // [修改]
                                 items: [] 
                             }; 
                         }
@@ -1335,6 +1359,7 @@ function doPost(e) {
                                 item.flightNo = flightDetails[1] || '';
                                 item.flightDuration = (durPart[1] || '').trim();
                                 
+                                // [修改] 解析抵達時間和 offset: "12:30 (+1)"
                                 const rawArr = (arrPart[1] || '').trim();
                                 const match = rawArr.match(/(\d{1,2}:\d{2})\s*(?:\(\+(\d+)\))?/);
                                 if (match) {
@@ -1484,6 +1509,11 @@ function doPost(e) {
                         if (diff > 0) { for(let i=0; i<diff; i++) days.value.push({ items:[], accommodation:'', accommodationCost:0, date:'' }); } 
                         else if (diff < 0) { if(confirm(`減少了 ${Math.abs(diff)} 天，確定刪除後面的行程嗎？`)) { days.value.splice(days.value.length + diff, Math.abs(diff)); } else { setup.value.days = days.value.length; } }
                         saveData();
+                        
+                        // [新增] 如果設定了 GAS 網址，這裡也順便嘗試同步 INDEX
+                        if (googleScriptUrl.value) {
+                            uploadBookshelf();
+                        }
                     }
                     showSettings.value = false;
                     showSetupModal.value = false;
@@ -1520,7 +1550,7 @@ function doPost(e) {
                 };
 
                 const changeDay = (idx) => {
-                    viewMode.value = 'list';
+                    viewMode.value = 'list'; // [修改] 強制回到行程列表模式
                     currentDayIdx.value = idx;
                 }
 
@@ -1615,7 +1645,7 @@ function doPost(e) {
                     viewMode, changeViewMode, participants, tripTotalExpense, currentDayLocations,
                     checklist, checklistData, defaultChecklist: DEFAULT_CHECKLIST_STRUCTURE, toggleCheckItem, categoryExpenses,
                     isChecklistEditing, toggleChecklistEdit, addChecklistItem, removeChecklistItem, addChecklistCategory, removeChecklistCategory,
-                    getCategoryName, toggleAccommodationType, cycleArrivalOffset, downloadBookshelf
+                    getCategoryName, toggleAccommodationType, cycleArrivalOffset, downloadBookshelf, uploadBookshelf
                 };
             }
         }).mount('#app');
