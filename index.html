@@ -98,6 +98,7 @@
 
         .kraft-cover {
             background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E");
+            /* 強化立體感 */
             box-shadow: inset 10px 0 20px rgba(0,0,0,0.15), 5px 5px 15px rgba(0,0,0,0.2), 1px 1px 3px rgba(0,0,0,0.1);
             border-radius: 3px 10px 10px 3px;
             transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s;
@@ -433,15 +434,21 @@
 
                 <!-- 右上角操作區 -->
                 <div class="absolute top-6 right-6 z-50 flex flex-col gap-3">
+                     <!-- 說明書按鈕 -->
+                     <button @click="openManual" class="w-10 h-10 bg-white/80 hover:bg-white text-stone-600 rounded-full shadow-md backdrop-blur-sm flex items-center justify-center transition border border-gray-200 hover:scale-105 active:scale-95" title="使用說明">
+                        <i class="ph-bold ph-book-open-text text-xl"></i>
+                     </button>
+                     <!-- 設定按鈕 -->
                      <button @click="showSettings = true" class="w-10 h-10 bg-white/80 hover:bg-white text-stone-600 rounded-full shadow-md backdrop-blur-sm flex items-center justify-center transition border border-gray-200 hover:scale-105 active:scale-95" title="設定">
                         <i class="ph-bold ph-gear text-xl"></i>
                      </button>
-                     <button @click="downloadBookshelf" class="w-10 h-10 bg-white/80 hover:bg-white text-blue-600 rounded-full shadow-md backdrop-blur-sm flex items-center justify-center transition border border-gray-200 hover:scale-105 active:scale-95" title="從雲端下載書架">
+                     <!-- 下載按鈕 -->
+                     <button @click="downloadBookshelf" class="w-10 h-10 bg-white/80 hover:bg-white text-stone-600 rounded-full shadow-md backdrop-blur-sm flex items-center justify-center transition border border-gray-200 hover:scale-105 active:scale-95" title="從雲端下載書架">
                         <i class="ph-bold ph-cloud-arrow-down text-xl"></i>
                      </button>
-                     <!-- 上傳書架按鈕 -->
-                     <button @click="uploadBookshelf" class="w-10 h-10 bg-white/80 hover:bg-white text-green-600 rounded-full shadow-md backdrop-blur-sm flex items-center justify-center transition border border-gray-200 hover:scale-105 active:scale-95" title="上傳本機書架到雲端">
-                        <i class="ph-bold ph-cloud-arrow-up text-xl"></i>
+                     <!-- 存檔按鈕 -->
+                     <button @click="uploadBookshelf" class="w-10 h-10 bg-white/80 hover:bg-white text-stone-600 rounded-full shadow-md backdrop-blur-sm flex items-center justify-center transition border border-gray-200 hover:scale-105 active:scale-95" title="存檔 (上傳至雲端)">
+                        <i class="ph-bold ph-floppy-disk text-xl"></i>
                      </button>
                 </div>
             </div>
@@ -697,7 +704,10 @@
                                                             <!-- Flight Path & No -->
                                                             <div class="flex-1 flex flex-col items-center justify-center px-2">
                                                                 <input v-model="item.flightNo" class="bg-transparent text-[10px] font-bold text-gray-500 w-full outline-none text-center mb-0.5" placeholder="航班號">
-                                                                <div class="flight-path"><i class="ph-fill ph-airplane text-gray-300 text-xs transform rotate-90"></i></div>
+                                                                <div class="flight-path-container">
+                                                                    <div class="flight-line"></div>
+                                                                    <div class="flight-icon-wrapper"><i class="ph-fill ph-airplane text-gray-300 text-xs transform rotate-90"></i></div>
+                                                                </div>
                                                             </div>
                                                             
                                                             <!-- Dest -->
@@ -839,49 +849,36 @@
             </div>
         </transition>
 
-        <!-- 設定視窗 Modal -->
-        <div v-if="showSettings || showSetupModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-white w-full max-w-lg rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+        <!-- [新增] 使用說明書 Modal -->
+        <div v-if="showManualModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-2xl rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
                 <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-                    <h2 class="font-bold text-gray-700 flex items-center gap-2"><i class="ph-duotone ph-gear"></i> {{ showSetupModal ? '建立新旅程' : '設定' }}</h2>
-                    <button v-if="tripList.length > 0 && !showSetupModal" @click="closeSettings" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
+                    <h2 class="font-bold text-gray-700 flex items-center gap-2"><i class="ph-duotone ph-book-open-text"></i> 使用說明書</h2>
+                    <button @click="showManualModal = false" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
                 </div>
                 
-                <div class="p-6 overflow-y-auto font-hand">
-                    <div class="mb-8" v-if="showSetupModal">
-                        <h3 class="text-lg font-bold text-gray-700 mb-4 border-l-4 border-gray-300 pl-2">旅程資訊</h3>
-                        <div class="flex flex-col gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">目的地</label>
-                                <input v-model="setup.destination" class="w-full bg-gray-50 border border-gray-300 rounded-md px-3 py-2 focus:border-gray-500 outline-none text-gray-700">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">出發日期</label>
-                                <input v-model="setup.startDate" type="date" class="w-full bg-gray-50 border border-gray-300 rounded-md px-3 py-2 outline-none text-gray-700">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">天數</label>
-                                <input v-model.number="setup.days" type="number" class="w-full bg-gray-50 border border-gray-300 rounded-md px-3 py-2 outline-none text-gray-700">
-                            </div>
-                        </div>
-                    </div>
+                <!-- Tabs -->
+                <div class="flex border-b border-gray-200">
+                    <button @click="manualTab = 'setup'" class="flex-1 py-3 text-sm font-bold transition" :class="manualTab === 'setup' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'">後端設定</button>
+                    <button @click="manualTab = 'sync'" class="flex-1 py-3 text-sm font-bold transition" :class="manualTab === 'sync' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'">跨裝置同步</button>
+                </div>
 
-                    <div v-if="!showSetupModal" class="mb-6">
-                        <h3 class="text-lg font-bold text-gray-700 mb-4 border-l-4 border-green-500/50 pl-2 flex items-center justify-between">
-                            Google Sheet 後端
-                            <button @click="showGasHelp = !showGasHelp" class="text-xs text-blue-400 underline font-normal">如何設定？</button>
-                        </h3>
-                        
-                        <div v-if="showGasHelp" class="bg-gray-50 p-3 rounded-lg text-xs text-gray-600 mb-4 border border-gray-200">
-                            <ol class="list-decimal pl-4 space-y-1">
-                                <li>建立一個新的 Google Sheet。</li>
-                                <li>點選「擴充功能」>「Apps Script」。</li>
-                                <li>將下方的程式碼貼入 `Code.gs` 並儲存。</li>
-                                <li>點選「部署」>「新增部署作業」> 類型選「網頁應用程式」。</li>
-                                <li><strong>存取權限設為「任何人」(Anyone)</strong>，執行身分設為「我」。</li>
-                                <li>複製產生的網址 (Web App URL)，貼到下方欄位。</li>
-                            </ol>
-                            <textarea readonly class="w-full h-24 mt-2 p-2 bg-gray-800 text-green-100 font-mono text-[10px] rounded select-all focus:outline-none">
+                <div class="p-6 overflow-y-auto font-hand text-gray-600 text-sm leading-relaxed">
+                    <!-- Tab 1: 後端設定 -->
+                    <div v-if="manualTab === 'setup'" class="space-y-4">
+                        <p>若要啟用雲端備份功能，請依照以下步驟建立 Google Apps Script 後端：</p>
+                        <ol class="list-decimal pl-5 space-y-2">
+                            <li>前往 <a href="https://sheet.new" target="_blank" class="text-blue-500 underline">Google Sheet</a> 建立一個新的試算表。</li>
+                            <li>點選上方選單的 <strong>擴充功能 (Extensions)</strong> > <strong>Apps Script</strong>。</li>
+                            <li>將下方程式碼完全覆蓋編輯器內容，並點擊儲存 (磁碟片圖示)。</li>
+                            <li>點選右上角的 <strong>部署 (Deploy)</strong> > <strong>新增部署作業 (New deployment)</strong>。</li>
+                            <li>點選左側齒輪圖示 > 選擇 <strong>網頁應用程式 (Web app)</strong>。</li>
+                            <li><strong>重要：</strong>將「存取權限 (Who has access)」設為 <strong>任何人 (Anyone)</strong>。</li>
+                            <li>點擊部署，複製產生的 <strong>網頁應用程式網址 (Web App URL)</strong>。</li>
+                            <li>回到本網頁，點擊右上角 <strong>設定 (齒輪)</strong>，將網址貼入並儲存。</li>
+                        </ol>
+                        <div class="relative">
+                            <textarea readonly class="w-full h-32 p-3 bg-gray-800 text-green-400 font-mono text-xs rounded-lg focus:outline-none mt-2">
 function doGet(e) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(e.parameter.sheet || 'Sheet1');
   if (!sheet) return ContentService.createTextOutput(JSON.stringify([]));
@@ -913,25 +910,80 @@ function doPost(e) {
     return ContentService.createTextOutput("Error: " + err.toString());
   }
 }</textarea>
+                            <p class="text-[10px] text-gray-400 mt-1 text-right">複製上方代碼貼入 Apps Script</p>
                         </div>
+                    </div>
 
+                    <!-- Tab 2: 跨裝置同步 -->
+                    <div v-if="manualTab === 'sync'" class="space-y-4">
+                        <p>您可以將建立好的旅遊手冊同步到手機或其他電腦上：</p>
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                            <h4 class="font-bold text-blue-700 mb-2">步驟 1：在原裝置 (A) 備份</h4>
+                            <p>確認您已設定好 Google Sheet 後端。點擊主畫面右上角的 <strong>「存檔 (磁碟片)」</strong> 按鈕，等待出現「書架目錄已上傳」提示。</p>
+                        </div>
+                        <div class="flex justify-center text-gray-300"><i class="ph-bold ph-arrow-down text-xl"></i></div>
+                        <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+                            <h4 class="font-bold text-green-700 mb-2">步驟 2：在新裝置 (B) 下載</h4>
+                            <ol class="list-decimal pl-5 space-y-1">
+                                <li>在新裝置打開本網頁。</li>
+                                <li>點擊右上角 <strong>設定 (齒輪)</strong>。</li>
+                                <li>貼上 <strong>完全相同</strong> 的 Google Apps Script 網址。</li>
+                                <li>點擊設定面板下方的 <strong>「從雲端下載書架」</strong> 按鈕。</li>
+                            </ol>
+                            <p class="mt-2 text-xs text-green-600">*下載後，點擊書架上的筆記本即可自動載入該行程的詳細內容。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+                    <button @click="showManualModal = false" class="px-6 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-md font-bold shadow-sm text-sm">關閉</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 設定視窗 Modal -->
+        <div v-if="showSettings || showSetupModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-lg rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="font-bold text-gray-700 flex items-center gap-2"><i class="ph-duotone ph-gear"></i> {{ showSetupModal ? '建立新旅程' : '設定' }}</h2>
+                    <button v-if="tripList.length > 0 && !showSetupModal" @click="closeSettings" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
+                </div>
+                
+                <div class="p-6 overflow-y-auto font-hand">
+                    <div class="mb-8" v-if="showSetupModal">
+                        <h3 class="text-lg font-bold text-gray-700 mb-4 border-l-4 border-gray-300 pl-2">旅程資訊</h3>
+                        <div class="flex flex-col gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">目的地</label>
+                                <input v-model="setup.destination" class="w-full bg-gray-50 border border-gray-300 rounded-md px-3 py-2 focus:border-gray-500 outline-none text-gray-700">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">出發日期</label>
+                                <input v-model="setup.startDate" type="date" class="w-full bg-gray-50 border border-gray-300 rounded-md px-3 py-2 outline-none text-gray-700">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">天數</label>
+                                <input v-model.number="setup.days" type="number" class="w-full bg-gray-50 border border-gray-300 rounded-md px-3 py-2 outline-none text-gray-700">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="!showSetupModal" class="mb-6">
+                        <h3 class="text-lg font-bold text-gray-700 mb-4 border-l-4 border-green-500/50 pl-2 flex items-center justify-between">
+                            Google Sheet 後端
+                        </h3>
+                        
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-500">Apps Script Web App URL</label>
                             <input v-model="googleScriptUrl" placeholder="https://script.google.com/macros/s/..../exec" class="w-full bg-gray-50 border border-gray-300 rounded-md px-3 py-2 text-xs font-mono text-gray-600 focus:border-gray-500 outline-none">
                             <p class="text-[10px] text-gray-400">若留空則使用瀏覽器暫存 (Local Storage)。</p>
                         </div>
 
-                        <!-- [新增] 雲端書架同步按鈕 -->
-                        <div v-if="googleScriptUrl" class="mt-4 pt-4 border-t border-gray-200 flex flex-col gap-2">
-                            <!-- 上傳按鈕 -->
-                            <button @click="uploadBookshelf" class="w-full flex items-center justify-center gap-2 bg-green-50 hover:bg-green-100 text-green-600 py-2 rounded-lg font-bold transition text-sm border border-green-200">
-                                <i class="ph-bold ph-cloud-arrow-up"></i> 上傳本機書架到雲端
-                            </button>
-                            <!-- 下載按鈕 -->
+                        <!-- [修改] 只有下載按鈕保留在設定頁 -->
+                        <div v-if="googleScriptUrl" class="mt-4 pt-4 border-t border-gray-200">
                             <button @click="downloadBookshelf" class="w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 rounded-lg font-bold transition text-sm border border-blue-200">
                                 <i class="ph-bold ph-cloud-arrow-down"></i> 從雲端下載書架
                             </button>
-                            <p class="text-[10px] text-gray-400 mt-1 text-center">若雲端沒有 INDEX 分頁，請先點擊「上傳」建立。</p>
                         </div>
                     </div>
 
@@ -975,6 +1027,10 @@ function doPost(e) {
                 const saveStatus = ref('');
                 const appTitle = ref('我的旅遊書架');
                 const participants = ref(1);
+
+                // [新增] 說明書 Modal 狀態
+                const showManualModal = ref(false);
+                const manualTab = ref('setup');
 
                 const showDeleteModal = ref(false);
                 const deleteTargetType = ref(null); 
@@ -1112,47 +1168,64 @@ function doPost(e) {
                     viewState.value = 'notebook';
                     viewMode.value = 'list';
                     currentDayIdx.value = 0;
-                    isLoading.value = true;
                     showSettings.value = false;
 
-                    const meta = tripList.value.find(t => t.id === id);
-                    if (meta) { setup.value = { ...setup.value, destination: meta.destination, startDate: meta.startDate }; }
+                    // 1. 嘗試讀取本機快取 (Local First)
+                    const localDataRaw = localStorage.getItem(`trip_${id}_data`);
+                    let hasLocalData = false;
 
-                    try {
-                        let tripData = null;
-                        if (storageMode.value === 'cloud') {
-                            const res = await fetch(`${googleScriptUrl.value}?sheet=${id}`);
-                            const json = await res.json();
-                            if (Array.isArray(json) && json.length > 0) { tripData = parseSheetDataToApp(json); }
-                        } else {
-                            const localData = localStorage.getItem(`trip_${id}_data`);
-                            if (localData) tripData = JSON.parse(localData);
+                    if (localDataRaw) {
+                        try {
+                            const localData = JSON.parse(localDataRaw);
+                            days.value = localData.days;
+                            setup.value = localData.setup;
+                            checklist.value = localData.checklist || [];
+                            checklistData.value = localData.checklistData || JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_STRUCTURE));
+                            hasLocalData = true;
+                        } catch (e) {
+                            console.error('Local data parse error', e);
                         }
+                    }
 
-                        if (tripData) {
-                            days.value = tripData.days;
-                            setup.value = tripData.setup;
-                            checklist.value = tripData.checklist || [];
-                            checklistData.value = tripData.checklistData || JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_STRUCTURE));
-                        } else {
+                    // 如果有本機資料，就不用顯示 Loading，直接讓使用者看
+                    if (!hasLocalData) {
+                        isLoading.value = true;
+                    }
+
+                    // 2. 如果是雲端模式，嘗試從網路更新 (Background Sync)
+                    if (storageMode.value === 'cloud') {
+                        fetch(`${googleScriptUrl.value}?sheet=${id}`)
+                            .then(res => res.json())
+                            .then(json => {
+                                if (Array.isArray(json) && json.length > 0) {
+                                    const tripData = parseSheetDataToApp(json);
+                                    // 更新資料 (Vue 會自動響應變更)
+                                    days.value = tripData.days;
+                                    setup.value = tripData.setup;
+                                    checklist.value = tripData.checklist;
+                                    checklistData.value = tripData.checklistData;
+                                    
+                                    // 同步回本機，確保下次開啟更快
+                                    localStorage.setItem(`trip_${id}_data`, JSON.stringify(tripData));
+                                }
+                            })
+                            .catch(e => {
+                                console.error('Cloud fetch error', e);
+                                if (!hasLocalData) {
+                                     // 如果連本機都沒有，且雲端失敗，才初始化空資料
+                                     initEmptyDays();
+                                }
+                            })
+                            .finally(() => {
+                                isLoading.value = false;
+                            });
+                    } else {
+                        // 本機模式且無資料
+                        if (!hasLocalData) {
                             initEmptyDays();
-                            checklist.value = [];
-                            checklistData.value = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_STRUCTURE));
+                            isLoading.value = false;
                         }
-                    } catch (e) {
-                        const localData = localStorage.getItem(`trip_${id}_data`);
-                        if (localData) {
-                            const d = JSON.parse(localData);
-                            days.value = d.days;
-                            setup.value = d.setup;
-                            checklist.value = d.checklist || [];
-                            checklistData.value = d.checklistData || JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_STRUCTURE));
-                        } else {
-                            initEmptyDays();
-                            checklist.value = [];
-                            checklistData.value = JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_STRUCTURE));
-                        }
-                    } finally { isLoading.value = false; }
+                    }
                 };
 
                 const backToShelf = () => {
@@ -1184,9 +1257,26 @@ function doPost(e) {
                     }
 
                     if (storageMode.value === 'cloud') {
+                        // 平行處理兩項上傳，加快速度
                         try {
                             const flatData = flattenAppDataToSheet(tripData);
-                            await fetch(googleScriptUrl.value, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sheetName: currentTripId.value, data: flatData }) });
+                            const indexData = tripList.value.map(t => [t.id, t.destination, t.startDate, t.daysCount, t.color]);
+                            indexData.unshift(['ID', 'Destination', 'StartDate', 'Days', 'Color']);
+                            
+                            const p1 = fetch(googleScriptUrl.value, { 
+                                method: 'POST', 
+                                mode: 'no-cors', 
+                                headers: { 'Content-Type': 'application/json' }, 
+                                body: JSON.stringify({ sheetName: currentTripId.value, data: flatData }) 
+                            });
+                            const p2 = fetch(googleScriptUrl.value, { 
+                                method: 'POST', 
+                                mode: 'no-cors', 
+                                headers: { 'Content-Type': 'application/json' }, 
+                                body: JSON.stringify({ sheetName: 'INDEX', data: indexData }) 
+                            });
+
+                            await Promise.all([p1, p2]);
                             saveStatus.value = '已同步至雲端';
                         } catch (e) {
                             saveStatus.value = '雲端同步失敗 (已存本機)';
@@ -1232,7 +1322,7 @@ function doPost(e) {
                             // 解析並覆蓋 tripList
                             tripList.value = json.map(row => ({
                                 id: row.ID,
-                                destination: row.Destination,
+                                destination: row.Destination || row.destination || '未命名行程', // [修改] 增加防呆
                                 startDate: (row.StartDate || '').split('T')[0],
                                 daysCount: parseInt(row.Days || 0),
                                 color: row.Color
@@ -1603,6 +1693,12 @@ function doPost(e) {
                         delete checklistData.value[category];
                     }
                 };
+                
+                // [新增] 打開手冊 Modal
+                const openManual = () => {
+                    showManualModal.value = true;
+                    manualTab.value = 'setup'; // default tab
+                };
 
                 // 地圖功能優化：使用快取
                 const initMap = async () => {
@@ -1652,7 +1748,8 @@ function doPost(e) {
                     viewMode, changeViewMode, participants, tripTotalExpense, currentDayLocations,
                     checklist, checklistData, defaultChecklist: DEFAULT_CHECKLIST_STRUCTURE, toggleCheckItem, categoryExpenses,
                     isChecklistEditing, toggleChecklistEdit, addChecklistItem, removeChecklistItem, addChecklistCategory, removeChecklistCategory,
-                    getCategoryName, toggleAccommodationType, cycleArrivalOffset, downloadBookshelf, uploadBookshelf
+                    getCategoryName, toggleAccommodationType, cycleArrivalOffset, downloadBookshelf, uploadBookshelf,
+                    showManualModal, manualTab, openManual
                 };
             }
         }).mount('#app');
