@@ -1234,8 +1234,8 @@ function doPost(e) {
                             tripList.value = json.map(row => ({
                                 id: row.ID,
                                 destination: row.Destination,
-                                startDate: row.StartDate,
-                                daysCount: row.Days,
+                                startDate: (row.StartDate || '').split('T')[0],
+                                daysCount: parseInt(row.Days || 0),
                                 color: row.Color
                             }));
                             localStorage.setItem('travel_notebook_index', JSON.stringify(tripList.value));
@@ -1262,6 +1262,7 @@ function doPost(e) {
                         // Handle flight mode in stay
                         let stayStr = day.accommodation || '';
                         if (day.accommodationType === 'flight') {
+                            // [修改] 儲存時加入抵達時間和 offset
                             stayStr = `[FLIGHT]${day.airline || ''}|${day.flightNo || ''}|${day.origin || ''}|${day.destination || ''}|${day.flightDuration || ''}|${day.time || ''}|${day.arrivalTime || ''}|${day.arrivalOffset || 0}`;
                         }
 
@@ -1291,6 +1292,9 @@ function doPost(e) {
                     let loadedChecklistData = null;
                     const dayMap = {};
                     sheetData.forEach(row => {
+                        // [修改] 防呆機制：如果該列沒有 Day_Index，跳過 (避免 Google Sheet 空白行)
+                        if (!row.Day_Index) return;
+                        
                         const dIdx = parseInt(row.Day_Index) - 1;
                         if (isNaN(dIdx)) return;
                         if (row.Setup_JSON) { try { loadedSetup = JSON.parse(row.Setup_JSON); } catch(e){} }
@@ -1380,7 +1384,11 @@ function doPost(e) {
                             dayMap[dIdx].items.push(item);
                         }
                     });
-                    const maxIdx = Math.max(...Object.keys(dayMap).map(Number));
+                    
+                    // [修改] 安全計算 maxIdx (避免 Infinity)
+                    const indices = Object.keys(dayMap).map(Number);
+                    const maxIdx = indices.length > 0 ? Math.max(...indices) : -1;
+                    
                     for(let i=0; i<=maxIdx; i++) { if (dayMap[i]) newDays.push(dayMap[i]); else newDays.push({ items:[] }); }
                     return { 
                         days: newDays, 
