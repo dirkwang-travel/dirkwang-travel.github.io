@@ -439,7 +439,7 @@
                      <button @click="downloadBookshelf" class="w-10 h-10 bg-white/80 hover:bg-white text-blue-600 rounded-full shadow-md backdrop-blur-sm flex items-center justify-center transition border border-gray-200 hover:scale-105 active:scale-95" title="從雲端下載書架">
                         <i class="ph-bold ph-cloud-arrow-down text-xl"></i>
                      </button>
-                     <!-- [新增] 上傳書架按鈕 -->
+                     <!-- 上傳書架按鈕 -->
                      <button @click="uploadBookshelf" class="w-10 h-10 bg-white/80 hover:bg-white text-green-600 rounded-full shadow-md backdrop-blur-sm flex items-center justify-center transition border border-gray-200 hover:scale-105 active:scale-95" title="上傳本機書架到雲端">
                         <i class="ph-bold ph-cloud-arrow-up text-xl"></i>
                      </button>
@@ -525,10 +525,12 @@
                                         <p class="mt-2 font-hand font-bold text-gray-500">翻頁中...</p>
                                     </div>
                                 </div>
-
+                                <div v-else-if="days.length === 0" class="text-center mt-12 text-gray-400">
+                                    <p>載入中或無資料...</p>
+                                </div>
                                 <!-- 單日內容與翻頁動畫 -->
                                 <transition name="page-turn" mode="out-in">
-                                    <div :key="currentDayIdx" class="flex-1">
+                                    <div v-if="days.length > 0" :key="currentDayIdx" class="flex-1">
                                         <!-- 標題 -->
                                         <div class="flex justify-between items-end mb-6 ml-6 sm:ml-0 border-b-2 border-gray-200 pb-2">
                                             <div class="memo-day inline-block px-4 py-2 shadow-sm max-w-[85%]">
@@ -695,10 +697,7 @@
                                                             <!-- Flight Path & No -->
                                                             <div class="flex-1 flex flex-col items-center justify-center px-2">
                                                                 <input v-model="item.flightNo" class="bg-transparent text-[10px] font-bold text-gray-500 w-full outline-none text-center mb-0.5" placeholder="航班號">
-                                                                <div class="flight-path-container">
-                                                                    <div class="flight-line"></div>
-                                                                    <div class="flight-icon-wrapper"><i class="ph-fill ph-airplane text-gray-300 text-xs transform rotate-90"></i></div>
-                                                                </div>
+                                                                <div class="flight-path"><i class="ph-fill ph-airplane text-gray-300 text-xs transform rotate-90"></i></div>
                                                             </div>
                                                             
                                                             <!-- Dest -->
