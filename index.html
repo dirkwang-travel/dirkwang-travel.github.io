@@ -98,7 +98,6 @@
 
         .kraft-cover {
             background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E");
-            /* 強化立體感 */
             box-shadow: inset 10px 0 20px rgba(0,0,0,0.15), 5px 5px 15px rgba(0,0,0,0.2), 1px 1px 3px rgba(0,0,0,0.1);
             border-radius: 3px 10px 10px 3px;
             transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s;
@@ -432,7 +431,7 @@
                     </div>
                 </div>
 
-                <!-- [修改] 右上角操作區 -->
+                <!-- 右上角操作區 -->
                 <div class="absolute top-6 right-6 z-50 flex flex-col gap-3">
                      <button @click="showSettings = true" class="w-10 h-10 bg-white/80 hover:bg-white text-stone-600 rounded-full shadow-md backdrop-blur-sm flex items-center justify-center transition border border-gray-200 hover:scale-105 active:scale-95" title="設定">
                         <i class="ph-bold ph-gear text-xl"></i>
@@ -1493,7 +1492,6 @@ function doPost(e) {
                 const closeSettings = () => { showSettings.value = false; showSetupModal.value = false; };
                 const initEmptyDays = () => { days.value = []; };
                 
-                // 新增項目
                 const addItem = (dIdx) => {
                      const newItem = { 
                         time: '', 
@@ -1502,7 +1500,7 @@ function doPost(e) {
                         note: '',
                         activity: '',
                         location: '',
-                        arrivalOffset: 0 // [修改] 預設不跨日
+                        arrivalOffset: 0
                     };
                     days.value[dIdx].items.push(newItem);
                 };
@@ -1517,12 +1515,12 @@ function doPost(e) {
                 };
 
                 const scrollToDay = (idx) => {
-                    viewMode.value = 'list'; // 每次切換天數都強制回到 list 模式
+                    viewMode.value = 'list'; 
                     currentDayIdx.value = idx;
                 };
 
                 const changeDay = (idx) => {
-                    viewMode.value = 'list'; // [修改] 強制回到行程列表模式
+                    viewMode.value = 'list';
                     currentDayIdx.value = idx;
                 }
 
@@ -1534,7 +1532,7 @@ function doPost(e) {
 
                 const toggleChecklistEdit = () => {
                     if (isChecklistEditing.value) {
-                        cleanChecklist(); // Save & Clean
+                        cleanChecklist(); 
                         saveData();
                     }
                     isChecklistEditing.value = !isChecklistEditing.value;
@@ -1573,47 +1571,33 @@ function doPost(e) {
                 const initMap = async () => {
                     await nextTick();
                     if (!document.getElementById('map')) return;
+                    if (mapInstance) { mapInstance.remove(); mapInstance = null; }
+                    mapInstance = L.map('map').setView([35.6895, 139.6917], 12);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(mapInstance);
                     
-                    // 若地圖容器已初始化，則重用 (Leaflet 不允許重複初始化)
-                    if (!mapInstance) {
-                         mapInstance = L.map('map').setView([35.6895, 139.6917], 12);
-                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(mapInstance);
-                         markersLayer = L.layerGroup().addTo(mapInstance);
-                    } else {
-                        // 清除舊標記
-                        markersLayer.clearLayers();
-                    }
+                    if (markersLayer) { markersLayer.clearLayers(); } else { markersLayer = L.layerGroup().addTo(mapInstance); }
 
                     const locs = currentDayLocations.value;
                     const bounds = L.latLngBounds();
-                    
                     for (const loc of locs) {
-                        // 檢查快取
-                        if (locCache[loc]) {
+                         if (locCache[loc]) {
                             const { lat, lon } = locCache[loc];
                             L.marker([lat, lon]).addTo(markersLayer).bindPopup(loc);
                             bounds.extend([lat, lon]);
                             continue;
                         }
-
                         try {
                             const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(loc)}`);
                             const data = await res.json();
                             if (data && data.length > 0) {
                                 const lat = data[0].lat; const lon = data[0].lon;
-                                // 寫入快取
-                                locCache[loc] = { lat, lon };
-                                L.marker([lat, lon]).addTo(markersLayer).bindPopup(loc);
+                                L.marker([lat, lon]).addTo(mapInstance).bindPopup(loc);
                                 bounds.extend([lat, lon]);
                             }
                         } catch (e) {}
-                        // 若沒快取才等待，避免 API 限制
                         await new Promise(r => setTimeout(r, 800));
                     }
-                    
-                    if (locs.length > 0 && !bounds.isEmpty()) { 
-                        mapInstance.fitBounds(bounds, { padding: [50, 50] }); 
-                    }
+                    if (locs.length > 0 && !bounds.isEmpty()) { mapInstance.fitBounds(bounds, { padding: [50, 50] }); }
                 };
 
                 watch(currentDayIdx, () => { if (viewMode.value === 'map') { initMap(); } });
