@@ -561,6 +561,21 @@
                 };
                 const cycleArrivalOffset = (obj) => { if (obj.arrivalOffset === undefined) obj.arrivalOffset = 0; obj.arrivalOffset += 1; if (obj.arrivalOffset > 2) obj.arrivalOffset = 0; };
                 
+                // --- 時間修正函式 (New Fix) ---
+                const formatDateFromISO = (val) => {
+                    if (!val) return '';
+                    // 偵測是否為 ISO 字串 (含有 T)，若是則轉回本地時間的 YYYY-MM-DD
+                    if (typeof val === 'string' && val.indexOf('T') > -1) {
+                        const date = new Date(val);
+                        if (isNaN(date.getTime())) return val.split('T')[0]; // 若解析失敗則退回原方法
+                        const year = date.getFullYear();
+                        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                        const day = date.getDate().toString().padStart(2, '0');
+                        return `${year}-${month}-${day}`;
+                    }
+                    return val;
+                };
+
                 onMounted(() => {
                     const savedList = localStorage.getItem('travel_notebook_index');
                     const savedUrl = localStorage.getItem('travel_notebook_gas_url');
@@ -639,7 +654,13 @@
                         const res = await fetch(`${googleScriptUrl.value}?sheet=INDEX`);
                         const json = await res.json();
                         if (Array.isArray(json) && json.length > 0) {
-                            tripList.value = json.map(row => ({ id: row.ID, destination: row.Destination || row.destination || '未命名行程', startDate: (row.StartDate || '').split('T')[0], daysCount: parseInt(row.Days || 0), color: row.Color }));
+                            tripList.value = json.map(row => ({ 
+                                id: row.ID, 
+                                destination: row.Destination || row.destination || '未命名行程', 
+                                startDate: formatDateFromISO(row.StartDate || row.startDate || ''), // 使用修正後的函式
+                                daysCount: parseInt(row.Days || 0), 
+                                color: row.Color 
+                            }));
                             localStorage.setItem('travel_notebook_index', JSON.stringify(tripList.value));
                             alert('書架已從雲端同步完成！');
                         } else { alert('雲端找不到書架資料 (INDEX)，請確認您的 Google Sheet。'); }
