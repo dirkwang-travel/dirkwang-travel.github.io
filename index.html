@@ -212,105 +212,105 @@
         .hide-scroll::-webkit-scrollbar { display: none; }
         .font-hand { font-family: 'Zen Maru Gothic', sans-serif; }
 
-        /* --- PDF 列印樣式 --- */
-        /* Screen only class */
+        /* --- PDF 列印樣式 (修正分頁邏輯) --- */
         .screen-hidden { display: none; }
 
         @media print {
             @page { margin: 0.5cm; size: A4; }
             
-            /* 隱藏 UI 元素 */
+            /* 1. 隱藏不必要的 UI */
             .app-header, .mobile-nav-item, .bookmark-tab, .bookmark-func, .bookmark-day, 
             .action-btn, .add-trip-card, .memo-add, button, .ph-x, .ph-trash, .ph-caret-down,
-            .mobile-nav-item, .bookmark-add, .ticket-separator + div > button {
+            .mobile-nav-item, .bookmark-add, .ticket-separator + div > button,
+            .hidden.sm\:flex.w-16.sm\:w-20, .sm\:hidden.fixed.bottom-0 {
                 display: none !important;
             }
 
-            /* 隱藏右側書籤欄容器 */
-            .hidden.sm\:flex.w-16.sm\:w-20 { display: none !important; }
-            .sm\:hidden.fixed.bottom-0 { display: none !important; }
-
-            /* 重置版面 */
-            body, #app, .notebook-view-active {
+            /* 2. 關鍵：解除所有父層容器的 Flex 和高度限制，允許內容自然流動 */
+            body, #app, .notebook-view-active, 
+            .w-full.h-full.max-w-5xl, .flex-1.bg-white, .paper-texture {
                 background-color: white !important;
                 height: auto !important;
+                min-height: 0 !important;
                 overflow: visible !important;
+                display: block !important; /* 破壞 Flexbox */
                 position: static !important;
                 width: 100% !important;
                 max-width: 100% !important;
-            }
-
-            /* 內頁容器 */
-            .shadow-2xl, .shadow-xl { box-shadow: none !important; }
-            .rounded-lg, .sm\:rounded-lg { border-radius: 0 !important; }
-            .border, .border-b, .border-l { border-color: #ddd !important; }
-            
-            /* 封面 */
-            .kraft-cover {
-                position: relative !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                page-break-after: avoid;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-                color: white !important;
-                padding-left: 2rem !important;
-            }
-            /* 隱藏封面返回按鈕與操作區 */
-            .kraft-cover button, .kraft-cover .absolute.top-4 { display: none !important; }
-
-            /* 內容區 */
-            .paper-texture {
-                background-image: none !important; /* 移除格線以求乾淨，或保留視需求 */
-                background-color: white !important;
-                height: auto !important;
-                overflow: visible !important;
+                margin: 0 !important;
                 padding: 0 !important;
             }
-            .max-w-3xl, .max-w-5xl {
+
+            /* 內容區塊寬度 */
+            .max-w-3xl {
                 max-width: 100% !important;
                 width: 100% !important;
-                padding: 1rem !important;
+                padding: 0 !important;
                 margin: 0 !important;
             }
 
-            /* 強制顯示所有天數 */
+            /* 3. 封面設定 */
+            .kraft-cover {
+                display: block !important;
+                position: relative !important;
+                height: auto !important;
+                min-height: 200px;
+                width: 100% !important;
+                margin-bottom: 2cm !important;
+                color: black !important;
+                page-break-after: always !important; /* 封面後換頁 */
+                break-after: page !important;
+                border-bottom: 2px solid #444 !important;
+            }
+            .kraft-cover * { color: black !important; }
+            .kraft-cover button, .kraft-cover .absolute.top-4 { display: none !important; }
+
+            /* 4. 強制顯示所有天數 */
             .screen-hidden { display: block !important; }
 
-            /* 輸入框美化 */
-            input, textarea, select {
-                border: none !important;
-                border-bottom: 1px dashed #ccc !important; /* 保留虛線底線，像手寫欄位 */
-                background: transparent !important;
-                appearance: none;
-                padding: 0 4px !important;
-                margin: 0 !important;
-                width: auto !important;
-                color: black !important;
-            }
-            input::placeholder { color: transparent !important; }
-            
-            /* 強制顏色 */
-            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            
-            /* 分頁控制 */
-            .memo-day {
-                page-break-before: auto; /* 標題前自動分頁 */
-                page-break-inside: avoid;
-                margin-top: 2rem !important;
-            }
-            /* 每一天的容器，除了最後一天，都強制分頁 */
+            /* 5. 分頁邏輯 (Day Container) */
             .day-container {
-                page-break-after: always;
+                display: block !important;
+                position: relative !important;
+                margin-top: 0 !important;
+                padding-top: 2rem !important; /* 頁首留白 */
+                
+                /* 強制換頁設定 */
+                page-break-after: always !important;
+                break-after: page !important;
+                
+                /* 避免內容被切斷 */
+                page-break-inside: auto; 
             }
+            
+            /* 最後一天不需要換頁 */
             .day-container:last-child {
-                page-break-after: auto;
+                page-break-after: auto !important;
+                break-after: auto !important;
             }
 
-            .boarding-pass, .memo-accommodation {
-                page-break-inside: avoid;
-                border: 1px solid #eee !important;
+            /* 6. 防止項目內部被切斷 */
+            .group\/item, .boarding-pass, .memo-accommodation {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                border: 1px solid #ddd !important;
+                box-shadow: none !important;
+                margin-bottom: 1rem !important;
             }
+
+            /* 7. 輸入框美化 */
+            input, textarea, select {
+                border: none !important;
+                border-bottom: 1px dashed #aaa !important;
+                background: transparent !important;
+                appearance: none;
+                padding: 0 2px !important;
+                color: black !important;
+            }
+            
+            /* 8. 移除多餘樣式 */
+            .shadow-2xl, .shadow-xl { box-shadow: none !important; }
+            .rounded-lg { border-radius: 0 !important; }
         }
     </style>
 </head>
