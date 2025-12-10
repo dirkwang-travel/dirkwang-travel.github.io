@@ -561,7 +561,7 @@
                 };
                 const cycleArrivalOffset = (obj) => { if (obj.arrivalOffset === undefined) obj.arrivalOffset = 0; obj.arrivalOffset += 1; if (obj.arrivalOffset > 2) obj.arrivalOffset = 0; };
                 
-                // --- 時間修正函式 (New Fix) ---
+                // --- 日期修正函式 (修復日期誤差) ---
                 const formatDateFromISO = (val) => {
                     if (!val) return '';
                     // 偵測是否為 ISO 字串 (含有 T)，若是則轉回本地時間的 YYYY-MM-DD
@@ -698,7 +698,17 @@
                         if (!dayMap[dIdx]) { 
                             let accType = 'hotel'; let accName = row.Day_Stay; let f_airline='', f_no='', f_org='', f_dst='', f_dur='', f_time='', f_arr='', f_off=0;
                             if (accName && accName.startsWith('[FLIGHT]')) { accType = 'flight'; const raw = accName.replace('[FLIGHT]', ''); const parts = raw.split('|'); f_airline = parts[0] || ''; f_no = parts[1] || ''; f_org = parts[2] || ''; f_dst = parts[3] || ''; f_dur = parts[4] || ''; f_time = parts[5] || ''; f_arr = parts[6] || ''; f_off = parseInt(parts[7] || 0); accName = f_airline + ' ' + f_no; }
-                            dayMap[dIdx] = { date: row.Date, accommodation: accName, accommodationCost: parseFloat(row.Day_Stay_Cost) || 0, accommodationType: accType, airline: f_airline, flightNo: f_no, origin: f_org, destination: f_dst, flightDuration: f_dur, time: f_time, arrivalTime: f_arr, arrivalOffset: f_off, items: [] }; 
+                            
+                            // 修正內頁日期格式 (如果 Sheet 存成 Date 物件)
+                            let dateStr = row.Date;
+                            if (dateStr && typeof dateStr === 'string' && dateStr.includes('T')) {
+                                const d = new Date(dateStr);
+                                if (!isNaN(d.getTime())) {
+                                    dateStr = `${d.getMonth()+1}/${d.getDate()}(${getDayOfWeek(d)})`;
+                                }
+                            }
+                            
+                            dayMap[dIdx] = { date: dateStr, accommodation: accName, accommodationCost: parseFloat(row.Day_Stay_Cost) || 0, accommodationType: accType, airline: f_airline, flightNo: f_no, origin: f_org, destination: f_dst, flightDuration: f_dur, time: f_time, arrivalTime: f_arr, arrivalOffset: f_off, items: [] }; 
                         }
                         if (row.Item_Type) {
                             let item = { time: formatTime(row.Item_Time), type: row.Item_Type, cost: parseFloat(row.Item_Cost) || 0, note: row.Item_Note };
@@ -716,7 +726,28 @@
                     return { days: newDays, setup: loadedSetup || setup.value, checklist: loadedChecklist || [], checklistData: loadedChecklistData || JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_STRUCTURE)) };
                 };
                 
-                const formatTime = (t) => { if (!t) return ''; if (t.toString().includes('T')) return t.toString().split('T')[1].substring(0,5); return t; }
+                // --- 時間解析強化 (核心修正) ---
+                const formatTime = (t) => {
+                    if (!t) return '';
+                    const str = t.toString();
+                    
+                    // 1. 偵測是否為 ISO 時間格式 (ex: 2023-10-20T10:00:00.000Z)
+                    // 若是，強制轉為當地時間
+                    if (str.match(/^\d{4}-\d{2}-\d{2}T/)) {
+                        const d = new Date(str);
+                        if (!isNaN(d.getTime())) {
+                            const hh = d.getHours().toString().padStart(2, '0');
+                            const mm = d.getMinutes().toString().padStart(2, '0');
+                            return `${hh}:${mm}`;
+                        }
+                    }
+                    
+                    // 2. 一般字串處理
+                    if (str.includes('T')) return str.split('T')[1].substring(0,5); 
+                    if (str.includes(':')) return str.substring(0, 5);
+                    return str;
+                }
+
                 const validateTime = (obj) => {
                     let input = (obj.time || '').trim(); if (!input) return;
                     input = input.replace(/[^0-9:]/g, '').replace(/：|\./g, ':');
