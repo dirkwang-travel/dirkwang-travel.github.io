@@ -212,7 +212,7 @@
         .hide-scroll::-webkit-scrollbar { display: none; }
         .font-hand { font-family: 'Zen Maru Gothic', sans-serif; }
 
-        /* --- PDF 列印樣式 (修正修復版 v5: 獨立封面元件) --- */
+        /* --- PDF 列印樣式 (修正修復版 v6: 滿版天數 & 無總金額封面) --- */
         .print-cover-page { display: none; } /* 平時隱藏 */
         .screen-hidden { display: none; }
 
@@ -299,15 +299,8 @@
                 font-family: 'Zen Maru Gothic', sans-serif;
             }
             
-            .print-cover-page .total-box {
-                background-color: rgba(255,255,255,0.2) !important; 
-                border: 2px solid white !important;
-                border-radius: 12px !important;
-                padding: 1.5rem 3rem !important;
-                margin-top: 2rem !important;
-            }
-            .print-cover-page .total-label { color: rgba(255,255,255,0.9) !important; font-size: 1rem !important; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; }
-            .print-cover-page .total-amount { color: white !important; font-size: 2.5rem !important; font-weight: 800 !important; font-family: 'Zen Maru Gothic', sans-serif; }
+            /* 隱藏封面上的 Total Cost */
+            .print-cover-page .total-box { display: none !important; }
 
             /* 5. 內容區 (恢復紙張質感) */
             .paper-texture {
@@ -338,6 +331,10 @@
                 margin-top: 0 !important;
                 padding: 2rem 3rem !important;
                 
+                /* 強制每一天至少佔滿一整頁 */
+                min-height: 100vh !important;
+                height: auto !important;
+
                 page-break-after: always !important;
                 break-after: page !important;
                 page-break-inside: auto; 
@@ -461,10 +458,7 @@
                 <div class="print-cover-page" :style="{ backgroundColor: currentTripColor || '#8D6E63' }">
                     <h1>{{ setup.destination || 'My Trip' }}</h1>
                     <p>{{ setup.startDate }}</p>
-                    <div class="total-box">
-                        <div class="total-label">Total Cost</div>
-                        <div class="total-amount">$ {{ totalCost.toLocaleString() }}</div>
-                    </div>
+                    <!-- Total Cost removed here -->
                 </div>
 
                 <!-- 內頁容器 -->
