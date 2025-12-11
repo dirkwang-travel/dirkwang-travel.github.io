@@ -212,21 +212,21 @@
         .hide-scroll::-webkit-scrollbar { display: none; }
         .font-hand { font-family: 'Zen Maru Gothic', sans-serif; }
 
-        /* --- PDF 列印樣式 (修正修復版 v6: 滿版天數 & 無總金額封面) --- */
+        /* --- PDF 列印樣式 (修正修復版 v7: 滿版、全寬、無總額) --- */
         .print-cover-page { display: none; } /* 平時隱藏 */
         .screen-hidden { display: none; }
 
         @media print {
             @page { margin: 0; size: A4; }
             
-            /* 1. 全局設定 */
+            /* 1. 全局設定：解除高度限制，允許自動分頁 */
             body, html, #app { 
                 margin: 0 !important; 
                 padding: 0 !important;
                 -webkit-print-color-adjust: exact !important; 
                 print-color-adjust: exact !important; 
                 width: 100% !important;
-                height: 100% !important;
+                height: auto !important; /* 修正：不要鎖死 100%，改為 auto */
                 overflow: visible !important;
             }
 
@@ -235,7 +235,7 @@
             .action-btn, .add-trip-card, .memo-add, button, .ph-x, .ph-trash, .ph-caret-down,
             .mobile-nav-item, .bookmark-add, .ticket-separator + div > button,
             .hidden.sm\:flex.w-16.sm\:w-20, .sm\:hidden.fixed.bottom-0,
-            header.kraft-cover /* 隱藏原本的 Header */
+            header.kraft-cover 
             {
                 display: none !important;
             }
@@ -250,7 +250,7 @@
                 display: block !important;
                 position: static !important;
                 width: 100% !important;
-                max-width: 100% !important;
+                max-width: 100% !important; /* 修正：移除最大寬度限制 */
                 margin: 0 !important;
                 padding: 0 !important;
                 box-shadow: none !important;
@@ -266,8 +266,8 @@
                 align-items: center !important;
                 
                 width: 100% !important;
-                height: 100vh !important; /* 滿版高度 */
-                min-height: 297mm !important;
+                height: 100vh !important; /* 確保封面佔滿第一頁 */
+                min-height: 297mm !important; /* A4 高度 */
                 
                 margin: 0 !important;
                 padding: 0 !important;
@@ -298,11 +298,8 @@
                 margin-bottom: 2rem !important;
                 font-family: 'Zen Maru Gothic', sans-serif;
             }
-            
-            /* 隱藏封面上的 Total Cost */
-            .print-cover-page .total-box { display: none !important; }
 
-            /* 5. 內容區 (恢復紙張質感) */
+            /* 5. 內容區 (恢復紙張質感，並解除寬度限制) */
             .paper-texture {
                 background-color: var(--paper-bg) !important;
                 background-image: linear-gradient(var(--line-color) 1px, transparent 1px) !important; 
@@ -314,11 +311,12 @@
                 margin-top: 0 !important;
             }
 
+            /* 修正：解除最大寬度限制，讓內容滿版 */
             .max-w-3xl {
                 max-width: 100% !important;
-                width: 100% !important;
+                width: 90% !important; /* 稍微留邊，避免印表機裁切 */
+                margin: 0 auto !important;
                 padding: 0 !important;
-                margin: 0 !important;
             }
 
             /* 6. 強制顯示所有天數 */
@@ -331,8 +329,8 @@
                 margin-top: 0 !important;
                 padding: 2rem 3rem !important;
                 
-                /* 強制每一天至少佔滿一整頁 */
-                min-height: 100vh !important;
+                /* 修正：強制最小高度為 A4，解決「切一半」問題 */
+                min-height: 297mm !important;
                 height: auto !important;
 
                 page-break-after: always !important;
@@ -458,7 +456,7 @@
                 <div class="print-cover-page" :style="{ backgroundColor: currentTripColor || '#8D6E63' }">
                     <h1>{{ setup.destination || 'My Trip' }}</h1>
                     <p>{{ setup.startDate }}</p>
-                    <!-- Total Cost removed here -->
+                    <!-- Total Cost removed -->
                 </div>
 
                 <!-- 內頁容器 -->
