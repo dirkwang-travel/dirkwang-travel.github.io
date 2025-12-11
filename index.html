@@ -212,7 +212,7 @@
         .hide-scroll::-webkit-scrollbar { display: none; }
         .font-hand { font-family: 'Zen Maru Gothic', sans-serif; }
 
-        /* --- PDF 列印樣式 (修正修復版) --- */
+        /* --- PDF 列印樣式 (修正修復版：完美封面) --- */
         .screen-hidden { display: none; }
 
         @media print {
@@ -255,28 +255,75 @@
                 margin: 0 !important;
             }
 
-            /* 4. 封面設定 (恢復色彩) */
+            /* 4. 封面設定 (全頁式書封) */
             .kraft-cover {
-                display: block !important;
+                display: flex !important; /* 啟用 Flex 以便置中 */
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                
                 position: relative !important;
-                height: auto !important;
-                min-height: 250px; /* 確保封面有足夠高度 */
                 width: 100% !important;
-                margin-bottom: 0 !important;
-                padding: 3rem 2rem !important; /* 增加內距 */
+                height: 100vh !important; /* 強制全螢幕高度 */
+                min-height: 297mm !important; /* A4 高度 */
+                margin: 0 !important;
+                padding: 0 !important;
                 
                 /* 強制背景列印 */
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 
                 color: white !important; /* 文字恢復白色 */
+                text-align: center !important;
+                
                 page-break-after: always !important; /* 封面後換頁 */
                 break-after: page !important;
+                border: none !important;
             }
-            .kraft-cover * { color: white !important; text-shadow: 0 1px 2px rgba(0,0,0,0.3); } 
-            .kraft-cover .text-gray-700 { color: white !important; } /* 總金額顏色修正 */
-            .kraft-cover .bg-white\/90 { background-color: rgba(255,255,255,0.2) !important; border: 1px solid rgba(255,255,255,0.4) !important; } /* 總金額框框透明化 */
-            .kraft-cover button, .kraft-cover .absolute.top-4 { display: none !important; }
+            
+            /* 調整封面內容 */
+            .kraft-cover .max-w-2xl {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 2rem !important;
+                margin: 0 auto !important;
+            }
+            
+            /* 調整標題大小 */
+            .kraft-cover h1 {
+                font-size: 4rem !important;
+                margin-bottom: 2rem !important;
+                justify-content: center !important;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            }
+            
+            /* 調整日期副標 */
+            .kraft-cover p {
+                font-size: 1.5rem !important;
+                justify-content: center !important;
+                opacity: 0.9 !important;
+            }
+            
+            /* 調整 Flex 結構以隱藏不必要的間距 */
+            .kraft-cover .flex {
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 2rem !important;
+            }
+
+            /* 總金額樣式調整為標籤 */
+            .kraft-cover .bg-white\/90 { 
+                background-color: rgba(255,255,255,0.2) !important; 
+                border: 2px solid white !important;
+                border-radius: 8px !important;
+                padding: 1rem 2rem !important;
+                margin-top: 2rem !important;
+            }
+            .kraft-cover .bg-white\/90 .text-gray-400 { color: rgba(255,255,255,0.8) !important; }
+            .kraft-cover .bg-white\/90 .text-gray-700 { color: white !important; font-size: 2rem !important; }
+
+            /* 隱藏封面上的按鈕與裝飾 */
+            .kraft-cover button, .kraft-cover .absolute { display: none !important; }
 
             /* 5. 內容區 (恢復紙張質感) */
             .paper-texture {
