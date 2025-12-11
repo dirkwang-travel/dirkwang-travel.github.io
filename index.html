@@ -205,7 +205,6 @@
         #print-area { display: none; }
 
         /* --- PDF 列印專用樣式 (重構版) --- */
-        /* 使用 CSS Class 切換機制 */
         body.is-printing {
             background: white !important;
             overflow: visible !important;
@@ -221,7 +220,6 @@
             display: block !important; 
         }
 
-        /* 為了讓 @media print 也能生效 (作為保險) */
         @media print {
             @page { size: A4; margin: 0; }
             body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -232,7 +230,7 @@
         /* 3. 封面樣式 (A4 滿版) */
         .print-cover {
             width: 210mm;
-            height: 297mm; /* 強制 A4 高度 */
+            height: 297mm;
             position: relative;
             display: flex;
             flex-direction: column;
@@ -256,7 +254,6 @@
             font-family: 'M PLUS Rounded 1c', sans-serif;
             letter-spacing: 2px;
         }
-        /* 紋理疊加 */
         .print-cover::before {
             content: '';
             position: absolute;
@@ -269,7 +266,6 @@
         /* 4. 內頁樣式 (A4 頁面) */
         .print-page {
             width: 210mm;
-            /* 高度由 JS 控制為 297mm 的倍數 */
             min-height: 297mm; 
             padding: 20mm;
             background-color: #fffdf5; /* 米色紙張 */
@@ -279,10 +275,9 @@
             page-break-after: always;
             box-sizing: border-box;
             font-family: 'Zen Maru Gothic', sans-serif;
-            overflow: hidden; /* 隱藏超出的內容，雖然 JS 會計算高度 */
+            overflow: hidden;
         }
         
-        /* 左側紅線 */
         .print-page::before {
             content: '';
             position: absolute;
@@ -290,10 +285,9 @@
             width: 1px;
             background-color: #ffcccc;
             z-index: 0;
-            height: 100%; /* 確保線條跟隨容器高度 */
+            height: 100%;
         }
 
-        /* 頁首 */
         .print-header {
             font-size: 24pt;
             font-weight: bold;
@@ -320,7 +314,7 @@
             border-radius: 8px;
             padding: 15px;
             margin-bottom: 30px;
-            margin-left: 10mm; /* 避開紅線 */
+            margin-left: 10mm;
             position: relative;
             z-index: 1;
         }
@@ -332,37 +326,39 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        .print-stay div {
+        .print-stay div.content {
             font-size: 16pt;
             color: #333;
             font-weight: bold;
-            display: flex;
-            justify-content: space-between;
         }
 
         /* 行程列表 */
         .print-item {
             display: flex;
             margin-bottom: 20px;
-            margin-left: 10mm; /* 避開紅線 */
+            margin-left: 10mm;
             position: relative;
             z-index: 1;
-            background: rgba(255,255,255,0.6); /* 增加可讀性 */
+            background: rgba(255,255,255,0.6);
             padding: 5px;
             border-radius: 4px;
         }
-        .print-time {
-            width: 60px;
+        .print-time-col {
+            /* 調整：增加寬度與右邊距，解決「太近」的問題 */
+            width: 80px; 
+            padding-right: 15px;
             font-family: monospace;
             font-size: 12pt;
             font-weight: bold;
             color: #444;
             padding-top: 4px;
+            text-align: right;
         }
-        .print-content {
+        .print-content-col {
             flex: 1;
             border-left: 2px solid #ddd;
-            padding-left: 15px;
+            /* 調整：增加內距，解決「太近」的問題 */
+            padding-left: 24px; 
         }
         .print-title {
             font-size: 14pt;
@@ -370,19 +366,25 @@
             color: #222;
             margin-bottom: 2px;
         }
-        .print-meta {
+        .print-meta-row {
             font-size: 10pt;
             color: #666;
             display: flex;
             gap: 10px;
+            align-items: center;
         }
         .print-cost {
             font-family: monospace;
             font-weight: bold;
             color: #8c1a30;
         }
+        .print-note {
+            font-size: 10pt;
+            color: #888;
+            font-style: italic;
+            margin-top: 4px;
+        }
         
-        /* 最後一頁不強制換頁 */
         .print-page:last-child {
             page-break-after: auto;
         }
@@ -472,7 +474,7 @@
                                     <div v-else-if="days.length === 0" class="text-center mt-12 text-gray-400"><p>載入中或無資料...</p></div>
                                     <div v-if="days.length > 0" class="flex-1">
                                          <div v-for="(day, dayIdx) in days" :key="dayIdx" v-show="dayIdx === currentDayIdx">
-                                            <!-- Interactive Day Content (Same as before) -->
+                                            <!-- Interactive Day Content -->
                                             <div class="flex justify-between items-end mb-6 border-b-2 border-gray-200 pb-2">
                                                 <div class="memo-day inline-block px-4 py-2 shadow-sm w-full sm:max-w-[85%]"><div class="flex items-baseline gap-2"><span class="font-bold text-xl sm:text-2xl text-gray-700 font-hand">Day {{ dayIdx + 1 }}</span><input v-model="day.date" class="bg-transparent border-b border-gray-300 w-32 font-hand text-sm focus:outline-none text-gray-500" placeholder="日期 (MM/DD)"></div></div><button @click="confirmRemoveDay(dayIdx)" class="text-gray-300 hover:text-red-400 p-2 transition shrink-0" title="刪除這一天"><i class="ph-bold ph-trash"></i></button>
                                             </div>
@@ -505,13 +507,11 @@
                                          </div>
                                     </div>
                                 </div>
-                                <!-- Checklist & Money (Unchanged) -->
+                                <!-- Checklist & Money -->
                                 <div v-if="viewMode === 'checklist'" class="max-w-3xl mx-auto p-4 sm:p-8 pt-10 font-hand pb-32">
-                                    <!-- ... checklist code ... -->
                                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 relative mb-8" :class="{'border-dashed border-accent-color': isChecklistEditing}"><div class="absolute -top-3 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-100 border border-gray-200 -rotate-1 rounded-sm z-0"></div><div class="flex justify-between items-center mb-6 border-b-2 border-dashed border-gray-300 pb-4 relative z-10"><h2 class="text-2xl font-bold text-gray-700">行前準備清單</h2><button @click="toggleChecklistEdit" class="text-gray-500 hover:text-accent-color transition" :title="isChecklistEditing ? '完成編輯' : '編輯清單'"><i :class="['ph-bold', isChecklistEditing ? 'ph-check text-2xl text-green-600' : 'ph-pencil-simple text-xl']"></i></button></div><div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div v-for="(items, category) in checklistData" :key="category" class="relative"><div class="flex justify-between items-center mb-3 border-b border-gray-200 pb-1"><h3 class="text-lg font-bold text-accent-color">{{ category }}</h3><button v-if="isChecklistEditing" @click="removeChecklistCategory(category)" class="text-red-300 hover:text-red-500"><i class="ph-bold ph-x"></i></button></div><ul class="space-y-2"><li v-for="(item, idx) in items" :key="idx" @click="!isChecklistEditing && toggleCheckItem(item)" class="checklist-item flex items-center text-sm p-3 sm:p-1 rounded relative group/item" :class="{ 'checked': !isChecklistEditing && checklist.includes(item) }"><div v-if="isChecklistEditing" class="flex items-center w-full gap-2"><input v-model="items[idx]" class="flex-1 bg-transparent border-b border-gray-300 text-gray-700 text-sm focus:border-accent-color outline-none"><button @click="removeChecklistItem(category, idx)" class="text-gray-300 hover:text-red-500"><i class="ph-bold ph-x"></i></button></div><div v-else class="flex items-center w-full"><div class="checkmark"><i class="ph-bold ph-check text-xs"></i></div><span class="text-gray-700 font-bold transition-all text-base sm:text-sm">{{ item }}</span></div></li></ul><div v-if="isChecklistEditing" class="mt-2 text-center"><button @click="addChecklistItem(category)" class="text-xs text-gray-400 hover:text-accent-color border border-dashed border-gray-300 hover:border-accent-color px-2 py-1 rounded">+ 新增項目</button></div></div></div><div v-if="isChecklistEditing" class="mt-8 pt-4 border-t border-dashed border-gray-200 text-center"><button @click="addChecklistCategory" class="text-sm text-gray-500 hover:text-gray-800 font-bold border-2 border-dashed border-gray-300 hover:border-gray-500 px-4 py-2 rounded-lg w-full"><i class="ph-bold ph-plus"></i> 新增分類</button></div></div>
                                 </div>
                                 <div v-if="viewMode === 'money'" class="max-w-3xl mx-auto p-4 sm:p-8 pt-10 font-hand pb-32">
-                                    <!-- ... money code ... -->
                                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 relative"><div class="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-12 border-4 border-gray-300 rounded-full z-10" style="border-bottom: none; height: 20px;"></div><h2 class="text-2xl font-bold text-gray-700 mb-6 text-center border-b-2 border-dashed border-gray-200 pb-4">旅程支出分類統計</h2><div class="flex justify-between items-center mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100"><label class="text-gray-500 font-bold">分帳人數：</label><div class="flex items-center gap-2"><button @click="participants > 1 ? participants-- : null" class="w-10 h-10 sm:w-8 sm:h-8 rounded bg-white border border-gray-300 text-gray-500 hover:bg-gray-100 font-bold">-</button><span class="font-mono text-xl font-bold w-8 text-center text-gray-700">{{ participants }}</span><button @click="participants++" class="w-10 h-10 sm:w-8 sm:h-8 rounded bg-white border border-gray-300 text-gray-500 hover:bg-gray-100 font-bold">+</button></div></div><div class="space-y-6 mb-6 overflow-y-auto max-h-[50vh] pr-2"><div v-for="(cat, key) in categoryExpenses" :key="key" v-show="cat.total > 0" class="border border-gray-100 rounded-lg p-3 shadow-sm bg-white"><div class="flex items-center justify-between mb-3 border-b border-gray-100 pb-2"><div class="flex items-center gap-2"><div :class="['w-8 h-8 rounded-full flex items-center justify-center', cat.bg, cat.color]"><i :class="['ph-duotone', cat.icon, 'text-lg']"></i></div><span class="font-bold text-gray-600">{{ cat.label }}</span></div><span class="font-mono font-bold text-lg text-gray-700">$ {{ cat.total.toLocaleString() }}</span></div><div class="space-y-1 pl-2"><div v-for="(item, i) in cat.list" :key="i" class="flex justify-between text-sm text-gray-500 hover:bg-gray-50 p-1 rounded"><span class="truncate max-w-[220px]">{{ item.desc }}</span><span class="font-mono text-gray-600">$ {{ item.cost.toLocaleString() }}</span></div></div></div><div v-if="tripTotalExpense === 0" class="text-center text-gray-400 py-4">尚未有任何支出紀錄</div></div><div class="bg-[#F4F2EE] p-4 rounded-lg mt-4 space-y-2 border border-gray-200"><div class="flex justify-between text-gray-600 font-bold"><span>全旅程總計</span><span class="text-xl font-mono">$ {{ tripTotalExpense.toLocaleString() }}</span></div><div class="flex justify-between text-gray-500 text-sm border-t border-gray-300 pt-2"><span>每人平均分擔</span><span class="font-mono text-lg text-accent-color font-bold">$ {{ Math.ceil(tripTotalExpense / participants).toLocaleString() }}</span></div></div></div>
                                 </div>
                             </div>
@@ -535,7 +535,6 @@
                 <div class="print-texture-overlay"></div>
                 <h1>{{ setup.destination || 'My Trip' }}</h1>
                 <p>{{ setup.startDate }}</p>
-                <!-- No Total Cost -->
             </div>
 
             <!-- 2. 內頁 -->
@@ -547,18 +546,33 @@
                     <span class="date-title">{{ day.date }}</span>
                 </div>
 
-                <!-- 住宿或過夜飛機 -->
+                <!-- 住宿或過夜飛機 (Fix: 顯示完整航班資訊) -->
                 <div v-if="day.accommodation || day.accommodationType === 'flight'" class="print-stay">
                     <h3>{{ day.accommodationType === 'flight' ? 'Overnight Flight' : 'Accommodation' }}</h3>
                     <div class="print-stay-content">
-                        <!-- Fix Logic: Correctly display flight info -->
-                        <span class="print-stay-name" v-if="day.accommodationType === 'flight'">
-                            {{ day.airline }} {{ day.flightNo }}
-                        </span>
-                        <span class="print-stay-name" v-else>
-                            {{ day.accommodation }}
-                        </span>
-                        <span class="print-stay-cost" v-if="day.accommodationCost > 0">$ {{ day.accommodationCost }}</span>
+                        <!-- Case 1: 機上過夜 - 顯示完整航班資訊 -->
+                        <div v-if="day.accommodationType === 'flight'" class="flex flex-col gap-1">
+                            <div class="font-bold text-lg text-gray-700">{{ day.airline }} {{ day.flightNo }}</div>
+                            <div class="flex items-center gap-2 text-sm text-gray-600">
+                                <span class="font-mono bg-gray-100 px-1 rounded">{{ day.origin }}</span>
+                                <span class="font-mono font-bold">{{ day.time }}</span>
+                                <i class="ph-bold ph-airplane-takeoff text-gray-400"></i>
+                                <span class="font-mono font-bold">{{ day.arrivalTime }}</span>
+                                <span class="font-mono bg-gray-100 px-1 rounded">{{ day.destination }}</span>
+                                <span v-if="day.arrivalOffset" class="text-xs text-red-500 font-bold">(+{{ day.arrivalOffset }})</span>
+                            </div>
+                            <div class="text-xs text-gray-400">飛行時長: {{ day.flightDuration }}</div>
+                        </div>
+                        
+                        <!-- Case 2: 一般住宿 -->
+                        <div v-else class="content flex justify-between">
+                            <span>{{ day.accommodation }}</span>
+                            <span class="print-stay-cost" v-if="day.accommodationCost > 0">$ {{ day.accommodationCost }}</span>
+                        </div>
+                    </div>
+                    <!-- 補上 Flight Cost 顯示 -->
+                    <div v-if="day.accommodationType === 'flight' && day.accommodationCost > 0" class="absolute top-4 right-4 print-stay-cost text-lg">
+                        $ {{ day.accommodationCost }}
                     </div>
                 </div>
                 
@@ -661,7 +675,6 @@
     <script>
         const { createApp, ref, computed, watch, onMounted, reactive, nextTick } = Vue;
 
-        // MUJI 經典自然色系
         const BOOK_COLORS = ['#8c1a30', '#1f1e1c', '#4c6b8a', '#c7bfba', '#90a28d', '#f4f2ee'];
         
         const DEFAULT_CHECKLIST_STRUCTURE = {
@@ -983,12 +996,11 @@
                     showSettings.value = false; showSetupModal.value = false;
                 };
                 
-                // 修正：關閉所有 Modal 視窗的函式
                 const closeSettings = () => { 
                     showSettings.value = false; 
                     showSetupModal.value = false; 
                     showEditTripModal.value = false;
-                    showManualModal.value = false; // 也確保說明視窗被關閉
+                    showManualModal.value = false;
                 };
                 
                 const initEmptyDays = () => { days.value = []; };
@@ -1007,9 +1019,7 @@
                 const removeChecklistCategory = (category) => { if(confirm(`確定刪除分類「${category}」及其所有項目嗎？`)) { delete checklistData.value[category]; } };
                 const openManual = () => { showManualModal.value = true; manualTab.value = 'setup'; };
                 
-                // --- 新增：編輯旅程邏輯 ---
                 const openEditTripModal = () => {
-                    // Find current trip color to populate the modal
                     const currentTrip = tripList.value.find(t => t.id === currentTripId.value);
                     editingTrip.value = { 
                         destination: setup.value.destination, 
@@ -1028,29 +1038,25 @@
                     const newDaysCount = editingTrip.value.days;
                     const diff = newDaysCount - oldDaysCount;
 
-                    // 1. 確認刪除頁面
                     if (diff < 0) {
                         if(!confirm(`您將旅程縮短了 ${Math.abs(diff)} 天，這些天數的行程資料將會被刪除。確定嗎？`)) {
                             return;
                         }
                     }
 
-                    // 2. 更新基礎資訊 (記憶體中)
                     setup.value.destination = editingTrip.value.destination;
                     setup.value.startDate = editingTrip.value.startDate;
                     setup.value.days = editingTrip.value.days;
 
-                    // 3. 更新 Trip List (書架索引) 的顏色與資訊
                     const tripIdx = tripList.value.findIndex(t => t.id === currentTripId.value);
                     if (tripIdx !== -1) {
                         tripList.value[tripIdx].destination = editingTrip.value.destination;
                         tripList.value[tripIdx].startDate = editingTrip.value.startDate;
                         tripList.value[tripIdx].daysCount = editingTrip.value.days;
-                        tripList.value[tripIdx].color = editingTrip.value.color; // Update color
+                        tripList.value[tripIdx].color = editingTrip.value.color;
                         localStorage.setItem('travel_notebook_index', JSON.stringify(tripList.value));
                     }
 
-                    // 4. 處理天數增減
                     if (diff > 0) {
                         for(let i=0; i<diff; i++) {
                             days.value.push({ items:[], accommodation:'', accommodationCost:0, date:'' });
@@ -1059,7 +1065,6 @@
                         days.value.splice(newDaysCount, Math.abs(diff));
                     }
 
-                    // 5. 全面重新計算日期 (Sync Logic)
                     const start = new Date(setup.value.startDate);
                     days.value.forEach((day, index) => {
                         const curr = new Date(start);
@@ -1070,23 +1075,18 @@
                         day.date = `${mm}/${dd}(${wd})`;
                     });
 
-                    // 6. 存檔與關閉
                     saveData();
                     if (googleScriptUrl.value) { uploadBookshelf(); }
                     showEditTripModal.value = false;
                     alert('旅程資訊已更新！');
                 };
                 
-                // 新增匯出 PDF 功能
                 const exportToPDF = async () => {
-                    // 1. 設定標題
                     document.title = (setup.value.destination || 'Travel Notebook') + " - " + setup.value.startDate;
                     
-                    // 2. 切換至列印模式
                     isExporting.value = true;
-                    await nextTick(); // 等待 Vue 渲染
+                    await nextTick();
 
-                    // 3. 計算並調整每一頁的高度，確保背景填滿
                     const testDiv = document.createElement('div');
                     testDiv.style.height = '297mm';
                     testDiv.style.visibility = 'hidden';
@@ -1095,42 +1095,31 @@
                     const a4HeightPx = testDiv.offsetHeight;
                     document.body.removeChild(testDiv);
 
-                    // 取得所有列印頁面
                     const pages = document.querySelectorAll('.print-page');
                     pages.forEach(page => {
-                        // 先重置高度以獲取內容真實高度
                         page.style.height = 'auto'; 
                         const contentHeight = page.scrollHeight;
-                        // 計算需要多少張 A4 紙
                         const pageCount = Math.ceil(contentHeight / a4HeightPx);
-                        // 強制設定高度為 A4 的倍數 (減一點點避免誤差導致多出一頁空白)
                         if (pageCount > 1) {
                             page.style.height = (pageCount * a4HeightPx - 1) + 'px';
                         } else {
-                            page.style.height = (a4HeightPx - 1) + 'px'; // 至少一頁滿版
+                            page.style.height = (a4HeightPx - 1) + 'px';
                         }
                     });
 
-                    // 4. 呼叫瀏覽器列印
                     setTimeout(() => {
                         window.focus(); 
                         window.print();
-                        
-                        // 5. 列印後恢復
                         isExporting.value = false;
-                        // 清除強制高度
                          pages.forEach(page => {
                             page.style.height = ''; 
                         });
                     }, 500);
                 };
 
-                // Wrapper for manual save button (reuses saveData logic but handles UI feedback)
                 const saveDataAndUpload = async () => {
                     await saveData();
                     if(storageMode.value === 'cloud') {
-                         // uploadBookshelf is called inside saveData for cloud mode if configured, 
-                         // but let's make sure user gets feedback
                          alert('行程已儲存！');
                     } else {
                          alert('行程已儲存至本機！');
