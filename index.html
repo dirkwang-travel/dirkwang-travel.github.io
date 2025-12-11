@@ -205,190 +205,190 @@
         #print-area { display: none; }
 
         /* --- PDF 列印專用樣式 (重構版) --- */
+        /* 使用 CSS Class 切換機制 */
+        body.is-printing {
+            background: white !important;
+            overflow: visible !important;
+            height: auto !important;
+        }
+        
+        body.is-printing #screen-area, 
+        body.is-printing .modal { 
+            display: none !important; 
+        }
+
+        body.is-printing #print-area { 
+            display: block !important; 
+        }
+
+        /* 為了讓 @media print 也能生效 (作為保險) */
         @media print {
-            @page { 
-                size: A4; 
-                margin: 0; 
-            }
-            
-            /* 1. 隱藏原本的螢幕介面 */
+            @page { size: A4; margin: 0; }
+            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             #screen-area, .modal { display: none !important; }
+            #print-area { display: block !important; }
+        }
 
-            /* 2. 顯示並重置列印介面 */
-            #print-area { 
-                display: block !important; 
-                background: white;
-                width: 100%;
-                height: auto;
-            }
+        /* 3. 封面樣式 (A4 滿版) */
+        .print-cover {
+            width: 210mm;
+            height: 297mm; /* 強制 A4 高度 */
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            page-break-after: always;
+            overflow: hidden;
+        }
+        .print-cover h1 {
+            font-size: 48pt;
+            font-weight: 800;
+            margin-bottom: 20pt;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-family: 'Noto Serif TC', serif;
+        }
+        .print-cover p {
+            font-size: 18pt;
+            opacity: 0.9;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            letter-spacing: 2px;
+        }
+        /* 紋理疊加 */
+        .print-cover::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+            pointer-events: none;
+            mix-blend-mode: overlay;
+        }
 
-            body, html { 
-                background: white !important; 
-                overflow: visible !important; 
-                height: auto !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                -webkit-print-color-adjust: exact !important; 
-                print-color-adjust: exact !important;
-            }
+        /* 4. 內頁樣式 (A4 頁面) */
+        .print-page {
+            width: 210mm;
+            /* 高度由 JS 控制為 297mm 的倍數 */
+            min-height: 297mm; 
+            padding: 20mm;
+            background-color: #fffdf5; /* 米色紙張 */
+            background-image: linear-gradient(#e5e5e5 1px, transparent 1px);
+            background-size: 100% 10mm; /* 寬格線 */
+            position: relative;
+            page-break-after: always;
+            box-sizing: border-box;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            overflow: hidden; /* 隱藏超出的內容，雖然 JS 會計算高度 */
+        }
+        
+        /* 左側紅線 */
+        .print-page::before {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0; left: 25mm;
+            width: 1px;
+            background-color: #ffcccc;
+            z-index: 0;
+            height: 100%; /* 確保線條跟隨容器高度 */
+        }
 
-            /* 3. 封面樣式 (A4 滿版) */
-            .print-cover {
-                width: 210mm;
-                height: 297mm; /* 強制 A4 高度 */
-                position: relative;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-                color: white;
-                page-break-after: always;
-                overflow: hidden;
-            }
-            .print-cover h1 {
-                font-size: 48pt;
-                font-weight: 800;
-                margin-bottom: 20pt;
-                text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-                font-family: 'Noto Serif TC', serif;
-            }
-            .print-cover p {
-                font-size: 18pt;
-                opacity: 0.9;
-                font-family: 'M PLUS Rounded 1c', sans-serif;
-                letter-spacing: 2px;
-            }
-            /* 紋理疊加 */
-            .print-cover::before {
-                content: '';
-                position: absolute;
-                inset: 0;
-                background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E");
-                pointer-events: none;
-            }
+        /* 頁首 */
+        .print-header {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #555;
+            border-bottom: 2px solid #555;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            position: relative;
+            z-index: 1;
+        }
+        .print-header span.date {
+            font-size: 14pt;
+            color: #888;
+            font-weight: normal;
+        }
 
-            /* 4. 內頁樣式 (A4 頁面) */
-            .print-page {
-                width: 210mm;
-                min-height: 297mm;
-                padding: 20mm;
-                background-color: #fffdf5; /* 米色紙張 */
-                background-image: linear-gradient(#e5e5e5 1px, transparent 1px);
-                background-size: 100% 10mm; /* 寬格線 */
-                position: relative;
-                page-break-after: always;
-                box-sizing: border-box;
-                font-family: 'Zen Maru Gothic', sans-serif;
-            }
-            
-            /* 左側紅線 */
-            .print-page::before {
-                content: '';
-                position: absolute;
-                top: 0; bottom: 0; left: 25mm;
-                width: 1px;
-                background-color: #ffcccc;
-                z-index: 0;
-            }
+        /* 住宿區塊 */
+        .print-stay {
+            background: rgba(255,255,255,0.8);
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 30px;
+            margin-left: 10mm; /* 避開紅線 */
+            position: relative;
+            z-index: 1;
+        }
+        .print-stay h3 {
+            font-size: 12pt;
+            color: #888;
+            margin-bottom: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .print-stay div {
+            font-size: 16pt;
+            color: #333;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+        }
 
-            /* 頁首 */
-            .print-header {
-                font-size: 24pt;
-                font-weight: bold;
-                color: #555;
-                border-bottom: 2px solid #555;
-                padding-bottom: 10px;
-                margin-bottom: 30px;
-                display: flex;
-                justify-content: space-between;
-                align-items: baseline;
-                position: relative;
-                z-index: 1;
-            }
-            .print-header span.date {
-                font-size: 14pt;
-                color: #888;
-                font-weight: normal;
-            }
-
-            /* 住宿區塊 */
-            .print-stay {
-                background: rgba(255,255,255,0.8);
-                border: 2px solid #ddd;
-                border-radius: 8px;
-                padding: 15px;
-                margin-bottom: 30px;
-                margin-left: 10mm; /* 避開紅線 */
-                position: relative;
-                z-index: 1;
-            }
-            .print-stay h3 {
-                font-size: 12pt;
-                color: #888;
-                margin-bottom: 5px;
-                font-weight: bold;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-            }
-            .print-stay div {
-                font-size: 16pt;
-                color: #333;
-                font-weight: bold;
-                display: flex;
-                justify-content: space-between;
-            }
-
-            /* 行程列表 */
-            .print-item {
-                display: flex;
-                margin-bottom: 20px;
-                margin-left: 10mm; /* 避開紅線 */
-                position: relative;
-                z-index: 1;
-                background: rgba(255,255,255,0.6); /* 增加可讀性 */
-                padding: 5px;
-                border-radius: 4px;
-            }
-            .print-time {
-                width: 60px;
-                font-family: monospace;
-                font-size: 12pt;
-                font-weight: bold;
-                color: #444;
-                padding-top: 4px;
-            }
-            .print-content {
-                flex: 1;
-                border-left: 2px solid #ddd;
-                padding-left: 15px;
-            }
-            .print-title {
-                font-size: 14pt;
-                font-weight: bold;
-                color: #222;
-                margin-bottom: 2px;
-            }
-            .print-meta {
-                font-size: 10pt;
-                color: #666;
-                display: flex;
-                gap: 10px;
-            }
-            .print-cost {
-                font-family: monospace;
-                font-weight: bold;
-                color: #8c1a30;
-            }
-            
-            /* 最後一頁不強制換頁 */
-            .print-page:last-child {
-                page-break-after: auto;
-            }
+        /* 行程列表 */
+        .print-item {
+            display: flex;
+            margin-bottom: 20px;
+            margin-left: 10mm; /* 避開紅線 */
+            position: relative;
+            z-index: 1;
+            background: rgba(255,255,255,0.6); /* 增加可讀性 */
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .print-time {
+            width: 60px;
+            font-family: monospace;
+            font-size: 12pt;
+            font-weight: bold;
+            color: #444;
+            padding-top: 4px;
+        }
+        .print-content {
+            flex: 1;
+            border-left: 2px solid #ddd;
+            padding-left: 15px;
+        }
+        .print-title {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 2px;
+        }
+        .print-meta {
+            font-size: 10pt;
+            color: #666;
+            display: flex;
+            gap: 10px;
+        }
+        .print-cost {
+            font-family: monospace;
+            font-weight: bold;
+            color: #8c1a30;
+        }
+        
+        /* 最後一頁不強制換頁 */
+        .print-page:last-child {
+            page-break-after: auto;
         }
     </style>
 </head>
-<body class="h-dvh w-full" :class="{'notebook-view-active': viewState === 'notebook'}">
+<body class="h-dvh w-full" :class="{'notebook-view-active': viewState === 'notebook', 'is-printing': isExporting}">
 
     <div id="app" class="relative w-full h-full flex flex-col">
 
@@ -437,6 +437,7 @@
             <transition name="slide-up">
                 <div v-if="viewState === 'notebook'" class="absolute inset-0 z-20 bg-[#44403F]/20 sm:flex items-center justify-center p-0 sm:p-4 backdrop-blur-sm">
                     <div class="w-full h-full max-w-5xl flex flex-col sm:flex-row shadow-2xl sm:rounded-lg overflow-hidden relative">
+                        <!-- Sidebar -->
                         <div class="hidden sm:flex w-16 sm:w-20 pt-16 pb-4 flex-col items-end z-30 shrink-0 relative pointer-events-none">
                             <div class="pointer-events-auto w-full pr-0 flex flex-col gap-1 overflow-y-auto hide-scroll pb-10" style="direction: rtl;">
                                 <div @click="changeViewMode('checklist')" :class="viewMode === 'checklist' ? 'active' : 'inactive'" class="bookmark-tab bookmark-func shadow-sm" style="direction: ltr;" title="行前準備"><i class="ph-bold ph-suitcase text-lg"></i></div>
@@ -445,12 +446,16 @@
                                 <button @click="addDay" class="bookmark-tab bookmark-add inactive h-10" style="direction: ltr;" title="新增一天"><i class="ph-bold ph-plus text-lg"></i></button>
                             </div>
                         </div>
+                        
+                        <!-- Content Area -->
                         <div class="flex-1 bg-white flex flex-col relative z-20 shadow-xl overflow-hidden sm:rounded-lg w-full h-full">
                             <header class="kraft-cover relative z-10 p-4 pb-6 shadow-sm flex-shrink-0 border-b border-gray-200 safe-pt" :style="{ backgroundColor: currentTripColor || '#8D6E63' }">
                                 <button @click="backToShelf" class="absolute top-4 left-4 sm:top-4 sm:left-4 safe-pt mt-2 sm:mt-0 text-white/90 hover:text-white bg-black/10 hover:bg-black/20 rounded-full p-2 transition z-20 flex items-center gap-1 pr-3 shadow-sm font-bold backdrop-blur-sm"><i class="ph-bold ph-arrow-left"></i><span class="text-xs">返回</span></button>
                                 <div class="absolute top-4 right-4 sm:top-4 sm:right-4 safe-pt mt-2 sm:mt-0 z-20 flex flex-col gap-2">
-                                    <button @click="openEditTripModal" class="text-white/90 hover:text-white bg-black/10 hover:bg-black/20 rounded-full p-2 transition shadow-sm backdrop-blur-sm" title="編輯旅程資訊"><i class="ph-bold ph-pencil-simple text-lg"></i></button>
-                                    <button @click="exportToPDF" class="text-white/90 hover:text-white bg-black/10 hover:bg-black/20 rounded-full p-2 transition shadow-sm backdrop-blur-sm" title="匯出 PDF"><i class="ph-bold ph-printer text-lg"></i></button>
+                                    <button @click="openEditTripModal" class="text-white/90 hover:text-white bg-black/10 hover:bg-black/20 rounded-full p-1.5 transition shadow-sm backdrop-blur-sm" title="編輯旅程資訊"><i class="ph-bold ph-pencil-simple text-base"></i></button>
+                                    <button @click="exportToPDF" class="text-white/90 hover:text-white bg-black/10 hover:bg-black/20 rounded-full p-1.5 transition shadow-sm backdrop-blur-sm" title="匯出 PDF"><i class="ph-bold ph-printer text-base"></i></button>
+                                    <!-- 新增存檔按鈕 -->
+                                    <button @click="saveDataAndUpload" class="text-white/90 hover:text-white bg-black/10 hover:bg-black/20 rounded-full p-1.5 transition shadow-sm backdrop-blur-sm" title="儲存行程"><i class="ph-bold ph-floppy-disk text-base"></i></button>
                                 </div>
                                 <div class="absolute -bottom-2 left-0 w-full h-4 bg-repeat-x opacity-30" style="background-image: radial-gradient(circle, #000 2px, transparent 2.5px); background-size: 10px 10px;"></div>
                                 <div class="max-w-2xl mx-auto pt-10 sm:pt-8 text-center sm:text-left pl-0 sm:pl-12">
@@ -461,19 +466,17 @@
                                 </div>
                             </header>
 
-                            <!-- Notebook Content (Interactive) -->
                             <div class="flex-1 overflow-y-auto paper-texture relative pb-20 sm:pb-0" id="notebook-content">
                                 <div v-if="viewMode === 'list'" class="max-w-3xl mx-auto p-4 sm:p-8 sm:pl-10 pb-32 min-h-full flex flex-col">
                                     <div v-if="isLoading" class="absolute inset-0 z-50 bg-white/90 flex items-center justify-center"><div class="text-center"><i class="ph-duotone ph-pencil-simple-slash text-4xl animate-bounce text-gray-400"></i><p class="mt-2 font-hand font-bold text-gray-500">翻頁中...</p></div></div>
                                     <div v-else-if="days.length === 0" class="text-center mt-12 text-gray-400"><p>載入中或無資料...</p></div>
-                                    
-                                    <!-- Only show current day in Interactive Mode -->
                                     <div v-if="days.length > 0" class="flex-1">
                                          <div v-for="(day, dayIdx) in days" :key="dayIdx" v-show="dayIdx === currentDayIdx">
+                                            <!-- Interactive Day Content (Same as before) -->
                                             <div class="flex justify-between items-end mb-6 border-b-2 border-gray-200 pb-2">
                                                 <div class="memo-day inline-block px-4 py-2 shadow-sm w-full sm:max-w-[85%]"><div class="flex items-baseline gap-2"><span class="font-bold text-xl sm:text-2xl text-gray-700 font-hand">Day {{ dayIdx + 1 }}</span><input v-model="day.date" class="bg-transparent border-b border-gray-300 w-32 font-hand text-sm focus:outline-none text-gray-500" placeholder="日期 (MM/DD)"></div></div><button @click="confirmRemoveDay(dayIdx)" class="text-gray-300 hover:text-red-400 p-2 transition shrink-0" title="刪除這一天"><i class="ph-bold ph-trash"></i></button>
                                             </div>
-                                            <!-- Accommodation -->
+                                            <!-- Accommodation Editor -->
                                             <div v-if="day.accommodationType === 'flight'" class="sm:ml-8 mb-6 boarding-pass rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition relative p-0 z-10 w-full sm:max-w-[85%]">
                                                 <div @click="toggleAccommodationType(dayIdx)" class="absolute -left-2 sm:-left-3 top-4 w-6 h-6 bg-blue-50 hover:bg-blue-100 rounded-full flex items-center justify-center text-blue-400 hover:text-blue-600 border border-blue-100 shadow-sm z-50 cursor-pointer transition"><i class="ph-fill ph-airplane-tilt"></i></div>
                                                 <div class="bg-gray-50 px-4 py-2 border-b border-dashed border-gray-200 flex justify-between items-center pl-6 sm:pl-8"><div class="flex items-center gap-2 sm:gap-3 w-2/3"><i class="ph-fill ph-moon text-accent-color"></i><span class="text-xs font-bold text-gray-400 whitespace-nowrap hidden sm:inline">機上過夜</span><input v-model="day.airline" class="bg-transparent text-sm font-bold text-gray-700 w-full outline-none placeholder-gray-400 min-w-0" placeholder="航空公司"></div><div class="w-1/3 text-right flex items-center justify-end gap-1 z-20"><i class="ph-duotone ph-coins text-gray-400 text-xs"></i><input v-model.number="day.accommodationCost" type="number" class="bg-transparent text-sm font-mono text-gray-600 w-16 sm:w-20 outline-none text-right placeholder-gray-300" placeholder="0"></div></div>
@@ -529,39 +532,48 @@
         <div id="print-area">
             <!-- 1. 封面 -->
             <div class="print-cover" :style="{ backgroundColor: currentTripColor || '#8D6E63' }">
+                <div class="print-texture-overlay"></div>
                 <h1>{{ setup.destination || 'My Trip' }}</h1>
                 <p>{{ setup.startDate }}</p>
                 <!-- No Total Cost -->
             </div>
 
             <!-- 2. 內頁 -->
-            <div class="print-page" v-for="(day, idx) in days" :key="idx">
+            <div class="print-page" v-for="(day, idx) in days" :key="idx" ref="printPages">
+                <div class="print-page-line"></div>
+                
                 <div class="print-header">
-                    <span>Day {{ idx + 1 }}</span>
-                    <span class="date">{{ day.date }}</span>
+                    <span class="day-title">Day {{ idx + 1 }}</span>
+                    <span class="date-title">{{ day.date }}</span>
                 </div>
 
-                <!-- 住宿 -->
-                <div v-if="day.accommodation" class="print-stay">
-                    <h3>Accommodation</h3>
-                    <div>
-                        <span>{{ day.accommodation }}</span>
-                        <span class="print-cost" v-if="day.accommodationCost > 0">$ {{ day.accommodationCost }}</span>
+                <!-- 住宿或過夜飛機 -->
+                <div v-if="day.accommodation || day.accommodationType === 'flight'" class="print-stay">
+                    <h3>{{ day.accommodationType === 'flight' ? 'Overnight Flight' : 'Accommodation' }}</h3>
+                    <div class="print-stay-content">
+                        <!-- Fix Logic: Correctly display flight info -->
+                        <span class="print-stay-name" v-if="day.accommodationType === 'flight'">
+                            {{ day.airline }} {{ day.flightNo }}
+                        </span>
+                        <span class="print-stay-name" v-else>
+                            {{ day.accommodation }}
+                        </span>
+                        <span class="print-stay-cost" v-if="day.accommodationCost > 0">$ {{ day.accommodationCost }}</span>
                     </div>
                 </div>
                 
                 <!-- 行程清單 -->
-                <div v-if="day.items && day.items.length > 0">
+                <div class="print-timeline" v-if="day.items && day.items.length > 0">
                     <div class="print-item" v-for="(item, iIdx) in day.items" :key="iIdx">
-                        <div class="print-time">{{ item.time || '--:--' }}</div>
-                        <div class="print-content">
+                        <div class="print-time-col">{{ item.time || '--:--' }}</div>
+                        <div class="print-content-col">
                             <div class="print-title">{{ item.activity || item.airline + ' ' + item.flightNo }}</div>
-                            <div class="print-meta">
-                                <span v-if="item.location">📍 {{ item.location }}</span>
-                                <span v-if="item.type">🏷️ {{ getCategoryName(item.type) }}</span>
-                                <span class="print-cost" v-if="item.cost > 0">$ {{ item.cost }}</span>
+                            <div class="print-meta-row">
+                                <div class="print-meta-item" v-if="item.location">📍 {{ item.location }}</div>
+                                <div class="print-meta-item" v-if="item.type">🏷️ {{ getCategoryName(item.type) }}</div>
+                                <div class="print-meta-item print-cost" v-if="item.cost > 0">$ {{ item.cost }}</div>
                             </div>
-                            <div v-if="item.note" class="text-xs text-gray-500 italic mt-1">{{ item.note }}</div>
+                            <div v-if="item.note" class="print-note">{{ item.note }}</div>
                         </div>
                     </div>
                 </div>
@@ -569,7 +581,7 @@
             </div>
         </div>
 
-        <!-- Modals (Only screen) -->
+        <!-- Modals -->
         <transition name="modal">
             <div v-if="showDeleteModal" class="modal fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
                 <div class="modal-content bg-white w-full max-w-sm rounded-lg shadow-xl p-6 text-center border border-gray-100 relative">
@@ -579,6 +591,7 @@
             </div>
         </transition>
         
+        <!-- Settings/Manual Modals (Reused) -->
         <div v-if="showManualModal || showSettings || showSetupModal || showEditTripModal" class="modal fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 safe-pt">
             <div class="bg-white w-full max-w-lg rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[85vh]">
                 <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
@@ -688,6 +701,7 @@
                 const checklistData = ref(JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_STRUCTURE)));
                 const currentDayIdx = ref(0);
                 const storageMode = computed(() => googleScriptUrl.value && googleScriptUrl.value.startsWith('http') ? 'cloud' : 'local');
+                const isExporting = ref(false);
                 
                 const totalCost = computed(() => {
                     let total = 0;
@@ -820,6 +834,18 @@
                     } else { saveStatus.value = '已存於本機'; }
                     setTimeout(() => { saveStatus.value = ''; isSaving.value = false; }, 2000);
                 };
+
+                // Wrapper for manual save button (reuses saveData logic but handles UI feedback)
+                const saveDataAndUpload = async () => {
+                    await saveData();
+                    if(storageMode.value === 'cloud') {
+                         // uploadBookshelf is called inside saveData for cloud mode if configured, 
+                         // but let's make sure user gets feedback
+                         alert('行程已儲存！');
+                    } else {
+                         alert('行程已儲存至本機！');
+                    }
+                };
                 
                 const uploadBookshelf = async () => {
                     if (!googleScriptUrl.value) { alert('請先設定 Google Apps Script 網址'); return; }
@@ -909,22 +935,7 @@
                     return { days: newDays, setup: loadedSetup || setup.value, checklist: loadedChecklist || [], checklistData: loadedChecklistData || JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_STRUCTURE)) };
                 };
                 
-                const formatTime = (t) => {
-                    if (!t) return '';
-                    const str = t.toString();
-                    if (str.match(/^\d{4}-\d{2}-\d{2}T/)) {
-                        const d = new Date(str);
-                        if (!isNaN(d.getTime())) {
-                            const hh = d.getHours().toString().padStart(2, '0');
-                            const mm = d.getMinutes().toString().padStart(2, '0');
-                            return `${hh}:${mm}`;
-                        }
-                    }
-                    if (str.includes('T')) return str.split('T')[1].substring(0,5); 
-                    if (str.includes(':')) return str.substring(0, 5);
-                    return str;
-                }
-
+                const formatTime = (t) => { if (!t) return ''; if (t.toString().includes('T')) return t.toString().split('T')[1].substring(0,5); return t; }
                 const validateTime = (obj) => {
                     let input = (obj.time || '').trim(); if (!input) return;
                     input = input.replace(/[^0-9:]/g, '').replace(/：|\./g, ':');
@@ -961,6 +972,52 @@
                     showSetupModal.value = false;
                     saveData();
                 };
+                const openDeleteModal = (id) => { deleteTargetType.value = 'trip'; deleteTargetId.value = id; deleteTitle.value = '刪除旅遊筆記？'; deleteMessage.value = '確定要從書架上永久移除這本筆記嗎？此操作無法復原。'; showDeleteModal.value = true; };
+                const confirmRemoveDay = (idx) => { deleteTargetType.value = 'day'; deleteTargetId.value = idx; deleteTitle.value = '撕掉這一頁？'; deleteMessage.value = '確定要刪除這一天嗎？所有的行程紀錄都將消失。'; showDeleteModal.value = true; }
+                const closeDeleteModal = () => { showDeleteModal.value = false; deleteTargetType.value = null; deleteTargetId.value = null; };
+                const confirmDeleteAction = () => {
+                    if (deleteTargetType.value === 'trip') {
+                        const id = deleteTargetId.value; tripList.value = tripList.value.filter(t => t.id !== id);
+                        localStorage.setItem('travel_notebook_index', JSON.stringify(tripList.value)); localStorage.removeItem(`trip_${id}_data`);
+                        if (currentTripId.value === id) { currentTripId.value = null; viewState.value = 'shelf'; }
+                    } else if (deleteTargetType.value === 'day') { const idx = deleteTargetId.value; days.value.splice(idx, 1); setup.value.days = days.value.length; }
+                    closeDeleteModal();
+                };
+                const saveSettingsAndTrip = () => {
+                    localStorage.setItem('travel_notebook_gas_url', googleScriptUrl.value);
+                    if (currentTripId.value) {
+                        const diff = setup.value.days - days.value.length;
+                        if (diff > 0) { for(let i=0; i<diff; i++) days.value.push({ items:[], accommodation:'', accommodationCost:0, date:'' }); } 
+                        else if (diff < 0) { if(confirm(`減少了 ${Math.abs(diff)} 天，確定刪除後面的行程嗎？`)) { days.value.splice(days.value.length + diff, Math.abs(diff)); } else { setup.value.days = days.value.length; } }
+                        saveData();
+                        if (googleScriptUrl.value) { uploadBookshelf(); }
+                    }
+                    showSettings.value = false; showSetupModal.value = false;
+                };
+                
+                // 修正：關閉所有 Modal 視窗的函式
+                const closeSettings = () => { 
+                    showSettings.value = false; 
+                    showSetupModal.value = false; 
+                    showEditTripModal.value = false;
+                    showManualModal.value = false; // 也確保說明視窗被關閉
+                };
+                
+                const initEmptyDays = () => { days.value = []; };
+                const addItem = (dIdx) => { days.value[dIdx].items.push({ time: '', type: 'spot', cost: '', note: '', activity: '', location: '', arrivalOffset: 0 }); };
+                const removeItem = (dIdx, iIdx) => { days.value[dIdx].items.splice(iIdx, 1); };
+                const addDay = () => { days.value.push({ date: 'New Day', accommodation: '', accommodationCost: 0, items: [] }); setup.value.days = days.value.length; };
+                const removeDay = (idx) => { confirmRemoveDay(idx); };
+                const changeViewMode = (mode) => { viewMode.value = mode; };
+                const changeDay = (idx) => { viewMode.value = 'list'; currentDayIdx.value = idx; }
+                const toggleCheckItem = (item) => { const idx = checklist.value.indexOf(item); if (idx === -1) { checklist.value.push(item); } else { checklist.value.splice(idx, 1); } saveData(); };
+                const toggleChecklistEdit = () => { if (isChecklistEditing.value) { cleanChecklist(); saveData(); } isChecklistEditing.value = !isChecklistEditing.value; };
+                const cleanChecklist = () => { const allItems = new Set(); Object.values(checklistData.value).forEach(items => { items.forEach(i => allItems.add(i)); }); checklist.value = checklist.value.filter(i => allItems.has(i)); };
+                const addChecklistItem = (category) => { checklistData.value[category].push("新項目"); };
+                const removeChecklistItem = (category, index) => { checklistData.value[category].splice(index, 1); };
+                const addChecklistCategory = () => { const name = prompt("請輸入新分類名稱：", "新分類"); if (name && !checklistData.value[name]) { checklistData.value[name] = []; } };
+                const removeChecklistCategory = (category) => { if(confirm(`確定刪除分類「${category}」及其所有項目嗎？`)) { delete checklistData.value[category]; } };
+                const openManual = () => { showManualModal.value = true; manualTab.value = 'setup'; };
                 
                 // --- 新增：編輯旅程邏輯 ---
                 const openEditTripModal = () => {
@@ -1031,66 +1088,58 @@
                     showEditTripModal.value = false;
                     alert('旅程資訊已更新！');
                 };
-                // ---------------------------
-
-                const openDeleteModal = (id) => { deleteTargetType.value = 'trip'; deleteTargetId.value = id; deleteTitle.value = '刪除旅遊筆記？'; deleteMessage.value = '確定要從書架上永久移除這本筆記嗎？此操作無法復原。'; showDeleteModal.value = true; };
-                const confirmRemoveDay = (idx) => { deleteTargetType.value = 'day'; deleteTargetId.value = idx; deleteTitle.value = '撕掉這一頁？'; deleteMessage.value = '確定要刪除這一天嗎？所有的行程紀錄都將消失。'; showDeleteModal.value = true; }
-                const closeDeleteModal = () => { showDeleteModal.value = false; deleteTargetType.value = null; deleteTargetId.value = null; };
-                const confirmDeleteAction = () => {
-                    if (deleteTargetType.value === 'trip') {
-                        const id = deleteTargetId.value; tripList.value = tripList.value.filter(t => t.id !== id);
-                        localStorage.setItem('travel_notebook_index', JSON.stringify(tripList.value)); localStorage.removeItem(`trip_${id}_data`);
-                        if (currentTripId.value === id) { currentTripId.value = null; viewState.value = 'shelf'; }
-                    } else if (deleteTargetType.value === 'day') { const idx = deleteTargetId.value; days.value.splice(idx, 1); setup.value.days = days.value.length; }
-                    closeDeleteModal();
-                };
-                const saveSettingsAndTrip = () => {
-                    localStorage.setItem('travel_notebook_gas_url', googleScriptUrl.value);
-                    if (currentTripId.value) {
-                        const diff = setup.value.days - days.value.length;
-                        if (diff > 0) { for(let i=0; i<diff; i++) days.value.push({ items:[], accommodation:'', accommodationCost:0, date:'' }); } 
-                        else if (diff < 0) { if(confirm(`減少了 ${Math.abs(diff)} 天，確定刪除後面的行程嗎？`)) { days.value.splice(days.value.length + diff, Math.abs(diff)); } else { setup.value.days = days.value.length; } }
-                        saveData();
-                        if (googleScriptUrl.value) { uploadBookshelf(); }
-                    }
-                    showSettings.value = false; showSetupModal.value = false;
-                };
-                
-                // 修正：關閉所有 Modal 視窗的函式
-                const closeSettings = () => { 
-                    showSettings.value = false; 
-                    showSetupModal.value = false; 
-                    showEditTripModal.value = false;
-                    showManualModal.value = false; // 也確保說明視窗被關閉
-                };
-                
-                const initEmptyDays = () => { days.value = []; };
-                const addItem = (dIdx) => { days.value[dIdx].items.push({ time: '', type: 'spot', cost: '', note: '', activity: '', location: '', arrivalOffset: 0 }); };
-                const removeItem = (dIdx, iIdx) => { days.value[dIdx].items.splice(iIdx, 1); };
-                const addDay = () => { days.value.push({ date: 'New Day', accommodation: '', accommodationCost: 0, items: [] }); setup.value.days = days.value.length; };
-                const removeDay = (idx) => { confirmRemoveDay(idx); };
-                const changeViewMode = (mode) => { viewMode.value = mode; };
-                const changeDay = (idx) => { viewMode.value = 'list'; currentDayIdx.value = idx; }
-                const toggleCheckItem = (item) => { const idx = checklist.value.indexOf(item); if (idx === -1) { checklist.value.push(item); } else { checklist.value.splice(idx, 1); } saveData(); };
-                const toggleChecklistEdit = () => { if (isChecklistEditing.value) { cleanChecklist(); saveData(); } isChecklistEditing.value = !isChecklistEditing.value; };
-                const cleanChecklist = () => { const allItems = new Set(); Object.values(checklistData.value).forEach(items => { items.forEach(i => allItems.add(i)); }); checklist.value = checklist.value.filter(i => allItems.has(i)); };
-                const addChecklistItem = (category) => { checklistData.value[category].push("新項目"); };
-                const removeChecklistItem = (category, index) => { checklistData.value[category].splice(index, 1); };
-                const addChecklistCategory = () => { const name = prompt("請輸入新分類名稱：", "新分類"); if (name && !checklistData.value[name]) { checklistData.value[name] = []; } };
-                const removeChecklistCategory = (category) => { if(confirm(`確定刪除分類「${category}」及其所有項目嗎？`)) { delete checklistData.value[category]; } };
-                const openManual = () => { showManualModal.value = true; manualTab.value = 'setup'; };
                 
                 // 新增匯出 PDF 功能
-                const exportToPDF = () => {
-                    // 更新網頁標題以作為 PDF 檔名
+                const exportToPDF = async () => {
+                    // 1. 設定標題
                     document.title = (setup.value.destination || 'Travel Notebook') + " - " + setup.value.startDate;
                     
-                    // 使用 setTimeout 確保 UI 更新完成 (例如隱藏 tooltip) 並取得焦點
-                    // 某些瀏覽器若沒有 focus，window.print() 可能會失效
+                    // 2. 切換至列印模式
+                    isExporting.value = true;
+                    await nextTick(); // 等待 Vue 渲染
+
+                    // 3. 計算並調整每一頁的高度，確保背景填滿
+                    // 這裡我們暫時使用一個不可見的 div 來獲取當前環境下 A4 紙的像素高度
+                    // 通常 297mm 在螢幕上約為 1123px (96dpi) 但為了精確，我們動態測量
+                    const testDiv = document.createElement('div');
+                    testDiv.style.height = '297mm';
+                    testDiv.style.visibility = 'hidden';
+                    testDiv.style.position = 'absolute';
+                    document.body.appendChild(testDiv);
+                    const a4HeightPx = testDiv.offsetHeight;
+                    document.body.removeChild(testDiv);
+
+                    // 取得所有列印頁面
+                    const pages = document.querySelectorAll('.print-page');
+                    pages.forEach(page => {
+                        // 先重置高度以獲取內容真實高度
+                        page.style.height = 'auto'; 
+                        const contentHeight = page.scrollHeight;
+                        // 計算需要多少張 A4 紙
+                        const pageCount = Math.ceil(contentHeight / a4HeightPx);
+                        // 強制設定高度為 A4 的倍數 (減一點點避免誤差導致多出一頁空白)
+                        if (pageCount > 1) {
+                            page.style.height = (pageCount * a4HeightPx - 1) + 'px';
+                        } else {
+                            page.style.height = (a4HeightPx - 1) + 'px'; // 至少一頁滿版
+                        }
+                    });
+
+                    // 4. 呼叫瀏覽器列印
+                    // 使用 setTimeout 確保樣式套用完成
                     setTimeout(() => {
                         window.focus(); 
                         window.print();
-                    }, 100);
+                        
+                        // 5. 列印後恢復 (可選，這裡選擇保留在列印模式直到使用者手動刷新或我們自動恢復)
+                        // 為了讓使用者知道發生了什麼，我們可以延遲恢復
+                        // 但通常 print() 會阻塞 JS，直到視窗關閉
+                        isExporting.value = false;
+                        // 清除強制高度，以免影響下次計算
+                         pages.forEach(page => {
+                            page.style.height = ''; 
+                        });
+                    }, 500);
                 };
 
                 return {
@@ -1101,7 +1150,8 @@
                     validateTime, validateTimeSimple, validateDuration, viewMode, changeViewMode, participants, tripTotalExpense, 
                     checklist, checklistData, toggleCheckItem, categoryExpenses, isChecklistEditing, toggleChecklistEdit, addChecklistItem, removeChecklistItem, addChecklistCategory, removeChecklistCategory,
                     getCategoryName, toggleAccommodationType, cycleArrivalOffset, downloadBookshelf, uploadBookshelf, showManualModal, manualTab, openManual,
-                    getTypeColor, showEditTripModal, editingTrip, openEditTripModal, confirmEditTrip, BOOK_COLORS, exportToPDF // Export BOOK_COLORS to template
+                    getTypeColor, showEditTripModal, editingTrip, openEditTripModal, confirmEditTrip, BOOK_COLORS, exportToPDF, isExporting,
+                    saveDataAndUpload // Export new method
                 };
             }
         }).mount('#app');
