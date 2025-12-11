@@ -586,7 +586,7 @@
                         <i class="ph-duotone ph-gear"></i> 
                         {{ showManualModal ? '使用說明' : (showSetupModal ? '建立新旅程' : (showEditTripModal ? '編輯旅程資訊' : '設定')) }}
                     </h2>
-                    <button @click="closeSettings;showManualModal=false;showEditTripModal=false" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
+                    <button @click="closeSettings" class="text-gray-400 hover:text-gray-600"><i class="ph-bold ph-x text-lg"></i></button>
                 </div>
                 <div class="p-6 overflow-y-auto font-hand">
                      <!-- Manual Content -->
@@ -629,7 +629,7 @@
                             </div>
                         </div>
                         <div class="pt-4 border-t border-gray-200 mt-4 flex gap-3">
-                            <button @click="showEditTripModal = false" class="flex-1 py-3 text-gray-500 bg-gray-100 rounded-lg font-bold hover:bg-gray-200">取消</button>
+                            <button @click="closeSettings" class="flex-1 py-3 text-gray-500 bg-gray-100 rounded-lg font-bold hover:bg-gray-200">取消</button>
                             <button @click="confirmEditTrip" class="flex-1 bg-gray-700 hover:bg-gray-800 text-white py-3 rounded-lg font-bold transition shadow-sm">確認修正</button>
                         </div>
                     </div>
@@ -1055,7 +1055,15 @@
                     }
                     showSettings.value = false; showSetupModal.value = false;
                 };
-                const closeSettings = () => { showSettings.value = false; showSetupModal.value = false; showEditTripModal.value = false; };
+                
+                // 修正：關閉所有 Modal 視窗的函式
+                const closeSettings = () => { 
+                    showSettings.value = false; 
+                    showSetupModal.value = false; 
+                    showEditTripModal.value = false;
+                    showManualModal.value = false; // 也確保說明視窗被關閉
+                };
+                
                 const initEmptyDays = () => { days.value = []; };
                 const addItem = (dIdx) => { days.value[dIdx].items.push({ time: '', type: 'spot', cost: '', note: '', activity: '', location: '', arrivalOffset: 0 }); };
                 const removeItem = (dIdx, iIdx) => { days.value[dIdx].items.splice(iIdx, 1); };
