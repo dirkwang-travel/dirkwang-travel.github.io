@@ -1076,7 +1076,7 @@
                     showEditTripModal.value = false;
                     alert('旅程資訊已更新！');
                 };
-
+                
                 // 新增匯出 PDF 功能
                 const exportToPDF = async () => {
                     // 1. 設定標題
@@ -1115,7 +1115,10 @@
                     setTimeout(() => {
                         window.focus(); 
                         window.print();
+                        
+                        // 5. 列印後恢復
                         isExporting.value = false;
+                        // 清除強制高度
                          pages.forEach(page => {
                             page.style.height = ''; 
                         });
