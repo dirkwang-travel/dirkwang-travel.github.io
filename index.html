@@ -212,7 +212,7 @@
         .hide-scroll::-webkit-scrollbar { display: none; }
         .font-hand { font-family: 'Zen Maru Gothic', sans-serif; }
 
-        /* --- PDF 列印樣式 (修正修復版：完美封面) --- */
+        /* --- PDF 列印樣式 (修正修復版 v3: 穩定流式佈局) --- */
         .screen-hidden { display: none; }
 
         @media print {
@@ -222,6 +222,8 @@
             body { 
                 -webkit-print-color-adjust: exact !important; 
                 print-color-adjust: exact !important; 
+                margin: 0 !important;
+                padding: 0 !important;
             }
 
             /* 2. 隱藏不必要的 UI */
@@ -255,17 +257,22 @@
                 margin: 0 !important;
             }
 
-            /* 4. 封面設定 (全頁式書封) */
+            /* 4. 封面設定 (相對定位流式佈局 - 最穩定) */
             .kraft-cover {
-                display: flex !important; /* 啟用 Flex 以便置中 */
+                /* 使用 Flexbox 進行垂直置中 */
+                display: flex !important;
                 flex-direction: column !important;
                 justify-content: center !important;
                 align-items: center !important;
                 
+                /* 回歸文檔流 (Relative) 避免座標錯亂 */
                 position: relative !important;
+                
+                /* 強制高度為一頁 A4 (296mm 保留緩衝) */
+                height: 296mm !important;
+                min-height: 296mm !important;
                 width: 100% !important;
-                height: 100vh !important; /* 強制全螢幕高度 */
-                min-height: 297mm !important; /* A4 高度 */
+                
                 margin: 0 !important;
                 padding: 0 !important;
                 
@@ -273,15 +280,17 @@
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 
-                color: white !important; /* 文字恢復白色 */
+                color: white !important;
                 text-align: center !important;
                 
-                page-break-after: always !important; /* 封面後換頁 */
+                /* 封面後強制換頁 */
+                page-break-after: always !important;
                 break-after: page !important;
                 border: none !important;
+                border-radius: 0 !important;
             }
             
-            /* 調整封面內容 */
+            /* 調整封面內容容器 */
             .kraft-cover .max-w-2xl {
                 width: 100% !important;
                 max-width: 100% !important;
@@ -295,6 +304,7 @@
                 margin-bottom: 2rem !important;
                 justify-content: center !important;
                 text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                width: 100% !important;
             }
             
             /* 調整日期副標 */
@@ -302,28 +312,32 @@
                 font-size: 1.5rem !important;
                 justify-content: center !important;
                 opacity: 0.9 !important;
+                width: 100% !important;
             }
             
-            /* 調整 Flex 結構以隱藏不必要的間距 */
+            /* 調整 Flex 結構 */
             .kraft-cover .flex {
                 flex-direction: column !important;
                 align-items: center !important;
                 gap: 2rem !important;
+                width: 100% !important;
             }
 
-            /* 總金額樣式調整為標籤 */
+            /* 總金額樣式 */
             .kraft-cover .bg-white\/90 { 
                 background-color: rgba(255,255,255,0.2) !important; 
                 border: 2px solid white !important;
                 border-radius: 8px !important;
                 padding: 1rem 2rem !important;
                 margin-top: 2rem !important;
+                display: block !important;
+                min-width: auto !important;
             }
             .kraft-cover .bg-white\/90 .text-gray-400 { color: rgba(255,255,255,0.8) !important; }
             .kraft-cover .bg-white\/90 .text-gray-700 { color: white !important; font-size: 2rem !important; }
 
-            /* 隱藏封面上的按鈕與裝飾 */
-            .kraft-cover button, .kraft-cover .absolute { display: none !important; }
+            /* 隱藏裝飾 */
+            .kraft-cover button, .kraft-cover .absolute, .kraft-cover .h-4 { display: none !important; }
 
             /* 5. 內容區 (恢復紙張質感) */
             .paper-texture {
@@ -338,33 +352,33 @@
                 padding: 0 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+                
+                /* 因為封面已經是 relative 且有高度，內容會自然接在第二頁，不需要 margin-top */
+                margin-top: 0 !important;
             }
 
             /* 6. 強制顯示所有天數 */
             .screen-hidden { display: block !important; }
 
-            /* 7. 分頁邏輯 (Day Container) */
+            /* 7. 分頁邏輯 */
             .day-container {
                 display: block !important;
                 position: relative !important;
                 margin-top: 0 !important;
-                padding: 2rem 3rem !important; /* 增加左右留白 */
+                padding: 2rem 3rem !important;
                 
-                /* 強制換頁設定 */
                 page-break-after: always !important;
                 break-after: page !important;
                 
-                /* 避免內容被切斷 */
                 page-break-inside: auto; 
             }
             
-            /* 最後一天不需要換頁 */
             .day-container:last-child {
                 page-break-after: auto !important;
                 break-after: auto !important;
             }
 
-            /* 8. 防止項目內部被切斷 & 恢復項目背景色 */
+            /* 8. 防止項目內部被切斷 */
             .group\/item, .boarding-pass, .memo-accommodation {
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
@@ -387,7 +401,7 @@
                 background: transparent !important;
                 appearance: none;
                 padding: 0 2px !important;
-                color: #333 !important; /* 深灰色字體 */
+                color: #333 !important;
                 font-weight: bold;
             }
             
