@@ -212,13 +212,14 @@
         .hide-scroll::-webkit-scrollbar { display: none; }
         .font-hand { font-family: 'Zen Maru Gothic', sans-serif; }
 
-        /* --- PDF 列印樣式 (修正修復版 v4: 絕對穩定封面) --- */
+        /* --- PDF 列印樣式 (修正修復版 v5: 獨立封面元件) --- */
+        .print-cover-page { display: none; } /* 平時隱藏 */
         .screen-hidden { display: none; }
 
         @media print {
             @page { margin: 0; size: A4; }
             
-            /* 1. 全局設定：清除所有邊距干擾 */
+            /* 1. 全局設定 */
             body, html, #app { 
                 margin: 0 !important; 
                 padding: 0 !important;
@@ -226,13 +227,16 @@
                 print-color-adjust: exact !important; 
                 width: 100% !important;
                 height: 100% !important;
+                overflow: visible !important;
             }
 
             /* 2. 隱藏不必要的 UI */
             .app-header, .mobile-nav-item, .bookmark-tab, .bookmark-func, .bookmark-day, 
             .action-btn, .add-trip-card, .memo-add, button, .ph-x, .ph-trash, .ph-caret-down,
             .mobile-nav-item, .bookmark-add, .ticket-separator + div > button,
-            .hidden.sm\:flex.w-16.sm\:w-20, .sm\:hidden.fixed.bottom-0 {
+            .hidden.sm\:flex.w-16.sm\:w-20, .sm\:hidden.fixed.bottom-0,
+            header.kraft-cover /* 隱藏原本的 Header */
+            {
                 display: none !important;
             }
 
@@ -254,83 +258,56 @@
                 border-radius: 0 !important;
             }
 
-            /* 4. 封面設定 (改用 Block + Padding 暴力定位，放棄 Flex/Absolute 以求穩定) */
-            .kraft-cover {
-                display: block !important; /* 不用 Flex */
-                position: relative !important;
-                top: 0 !important;
-                left: 0 !important;
+            /* 4. 封面設定 (獨立頁面) */
+            .print-cover-page {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
                 
-                /* 強制滿版 */
                 width: 100% !important;
-                height: 100vh !important; /* 佔滿第一頁 */
+                height: 100vh !important; /* 滿版高度 */
                 min-height: 297mm !important;
                 
                 margin: 0 !important;
-                /* 使用 Padding 將內容推到中間偏上，這是最不會跑版的方式 */
-                padding-top: 35vh !important; 
-                padding-left: 0 !important;
-                padding-right: 0 !important;
+                padding: 0 !important;
                 
-                text-align: center !important;
+                /* 強制背景列印 */
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E") !important;
+                
                 color: white !important;
+                text-align: center !important;
                 
                 /* 封面後強制換頁 */
                 page-break-after: always !important;
                 break-after: page !important;
-                
-                border: none !important;
-                border-radius: 0 !important;
-                box-shadow: none !important; /* 移除陰影 */
-                z-index: 10;
             }
             
-            /* 封面內容置中 */
-            .kraft-cover .max-w-2xl {
-                margin: 0 auto !important;
-                padding: 0 !important;
-                width: 100% !important;
-            }
-            
-            /* 標題樣式 */
-            .kraft-cover h1 {
+            .print-cover-page h1 {
                 font-size: 4rem !important;
                 margin-bottom: 1.5rem !important;
-                display: block !important;
-                text-align: center !important;
-                justify-content: center !important;
+                font-weight: 800 !important;
                 text-shadow: 0 2px 4px rgba(0,0,0,0.3);
             }
             
-            .kraft-cover p {
+            .print-cover-page p {
                 font-size: 1.5rem !important;
-                text-align: center !important;
                 opacity: 0.9 !important;
-                display: block !important;
                 margin-bottom: 2rem !important;
+                font-family: 'Zen Maru Gothic', sans-serif;
             }
             
-            /* 隱藏封面原始的 Flex 結構造成的干擾 */
-            .kraft-cover .flex {
-                display: block !important;
-            }
-
-            /* 總金額樣式 */
-            .kraft-cover .bg-white\/90 { 
+            .print-cover-page .total-box {
                 background-color: rgba(255,255,255,0.2) !important; 
                 border: 2px solid white !important;
                 border-radius: 12px !important;
                 padding: 1.5rem 3rem !important;
-                margin: 2rem auto !important; /* Auto margin 水平置中 */
-                display: inline-block !important; /* 讓 auto margin 生效 */
-                width: auto !important;
-                min-width: 200px !important;
+                margin-top: 2rem !important;
             }
-            .kraft-cover .bg-white\/90 .text-gray-400 { color: rgba(255,255,255,0.9) !important; font-size: 1rem !important; margin-bottom: 0.5rem; }
-            .kraft-cover .bg-white\/90 .text-gray-700 { color: white !important; font-size: 2.5rem !important; font-weight: 800 !important;}
-
-            /* 隱藏其他裝飾 */
-            .kraft-cover button, .kraft-cover .absolute, .kraft-cover .h-4 { display: none !important; }
+            .print-cover-page .total-label { color: rgba(255,255,255,0.9) !important; font-size: 1rem !important; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; }
+            .print-cover-page .total-amount { color: white !important; font-size: 2.5rem !important; font-weight: 800 !important; font-family: 'Zen Maru Gothic', sans-serif; }
 
             /* 5. 內容區 (恢復紙張質感) */
             .paper-texture {
@@ -342,6 +319,13 @@
                 overflow: visible !important;
                 padding: 0 !important;
                 margin-top: 0 !important;
+            }
+
+            .max-w-3xl {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
 
             /* 6. 強制顯示所有天數 */
@@ -472,6 +456,17 @@
         <!-- 視圖 2: 筆記本編輯模式 -->
         <transition name="slide-up">
             <div v-if="viewState === 'notebook'" class="absolute inset-0 z-20 bg-[#44403F]/20 sm:flex items-center justify-center p-0 sm:p-4 backdrop-blur-sm">
+                
+                <!-- 新增：獨立的列印封面頁 (只在列印時顯示) -->
+                <div class="print-cover-page" :style="{ backgroundColor: currentTripColor || '#8D6E63' }">
+                    <h1>{{ setup.destination || 'My Trip' }}</h1>
+                    <p>{{ setup.startDate }}</p>
+                    <div class="total-box">
+                        <div class="total-label">Total Cost</div>
+                        <div class="total-amount">$ {{ totalCost.toLocaleString() }}</div>
+                    </div>
+                </div>
+
                 <!-- 內頁容器 -->
                 <div class="w-full h-full max-w-5xl flex flex-col sm:flex-row shadow-2xl sm:rounded-lg overflow-hidden relative">
                     
@@ -487,6 +482,8 @@
 
                     <!-- 主要內容區塊 -->
                     <div class="flex-1 bg-white flex flex-col relative z-20 shadow-xl overflow-hidden sm:rounded-lg w-full h-full">
+                        
+                        <!-- 原本的 Header (列印時隱藏) -->
                         <header class="kraft-cover relative z-10 p-4 pb-6 shadow-sm flex-shrink-0 border-b border-gray-200 safe-pt" :style="{ backgroundColor: currentTripColor || '#8D6E63' }">
                             <button @click="backToShelf" class="absolute top-4 left-4 sm:top-4 sm:left-4 safe-pt mt-2 sm:mt-0 text-white/90 hover:text-white bg-black/10 hover:bg-black/20 rounded-full p-2 transition z-20 flex items-center gap-1 pr-3 shadow-sm font-bold backdrop-blur-sm"><i class="ph-bold ph-arrow-left"></i><span class="text-xs">返回</span></button>
                             
