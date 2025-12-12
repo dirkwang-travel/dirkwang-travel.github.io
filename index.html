@@ -274,8 +274,8 @@
             min-height: 297mm; /* 確保至少一頁 */
             height: auto; /* 允許自動延伸 */
             padding: 20mm;
-            background-color: #fffdf5; 
-            background-image: linear-gradient(#e5e5e5 1px, transparent 1px);
+            background-color: #fffdf5 !important; /* 強制背景顏色 */
+            background-image: linear-gradient(#e5e5e5 1px, transparent 1px) !important; /* 強制背景圖案 */
             background-size: 100% 10mm; 
             position: relative;
             page-break-after: always;
@@ -284,6 +284,8 @@
             font-family: 'Zen Maru Gothic', sans-serif;
             overflow: visible !important; /* 重要：允許內容溢出到下一頁 */
             display: block;
+            -webkit-print-color-adjust: exact !important; /* 確保瀏覽器列印背景 */
+            print-color-adjust: exact !important;
         }
         
         .print-page::before {
@@ -844,7 +846,7 @@
                                     days.value = tripData.days; setup.value = tripData.setup; checklist.value = tripData.checklist; checklistData.value = tripData.checklistData;
                                     localStorage.setItem(`trip_${id}_data`, JSON.stringify(tripData));
                                 }
-                            }).catch(e => { if (!hasLocalData) initEmptyDays(); }).finally(() => { isLoading.value = false; });
+                            }).catch(e => { if (!hasLocalData) { initEmptyDays(); } }).finally(() => { isLoading.value = false; });
                     } else { if (!hasLocalData) { initEmptyDays(); isLoading.value = false; } }
                 };
 
