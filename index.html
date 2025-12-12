@@ -271,21 +271,25 @@
         /* 4. 內頁樣式 (A4 頁面 - 修復版) */
         .print-page {
             width: 210mm;
-            min-height: 297mm; /* 確保至少一頁 */
-            height: auto; /* 允許自動延伸 */
+            /* 修正：設定最小高度為 A4 高度，確保即使內容少，背景也能填滿整頁 */
+            min-height: 297mm; 
+            height: auto; 
             padding: 20mm;
             background-color: #fffdf5; 
+            /* 修正：確保背景線條重複填滿 */
             background-image: linear-gradient(#e5e5e5 1px, transparent 1px);
             background-size: 100% 10mm; 
+            background-repeat: repeat-y;
             position: relative;
             page-break-after: always;
             break-after: always; /* 強制換頁 */
             box-sizing: border-box;
             font-family: 'Zen Maru Gothic', sans-serif;
-            overflow: visible !important; /* 重要：允許內容溢出到下一頁 */
+            overflow: visible !important; 
             display: block;
         }
         
+        /* 側邊裝訂線裝飾 */
         .print-page::before {
             content: '';
             position: absolute;
@@ -294,6 +298,7 @@
             background-color: #ffcccc;
             z-index: 0;
             height: 100%;
+            min-height: 297mm; /* 確保線條延伸到底部 */
         }
 
         .print-header {
