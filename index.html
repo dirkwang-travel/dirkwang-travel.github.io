@@ -204,14 +204,11 @@
         /* --- Print Area (預設隱藏) --- */
         #print-area { display: none; }
 
-        /* --- PDF 列印專用樣式 (修復版 V3 - 統一手寫紙風格) --- */
-        
-        /* 1. 基礎重置：隱藏 UI，顯示列印區 */
+        /* --- PDF 列印專用樣式 (修復版) --- */
         body.is-printing {
-            background-color: white !important; /* Reset body background */
+            background: white !important;
             overflow: visible !important;
             height: auto !important;
-            margin: 0 !important;
         }
         
         body.is-printing #screen-area, 
@@ -224,18 +221,17 @@
         }
 
         @media print {
-            @page { size: A4; margin: 0; } /* 無邊距，由 .print-page 控制 padding */
+            @page { size: A4; margin: 0; }
             body { 
                 -webkit-print-color-adjust: exact !important; 
                 print-color-adjust: exact !important; 
-                margin: 0 !important;
-                background-color: white !important;
+                background: white !important;
             }
             #screen-area, .modal { display: none !important; }
             #print-area { display: block !important; }
         }
 
-        /* 3. 封面樣式 (A4 滿版 - 獨立材質) */
+        /* 3. 封面樣式 (A4 滿版) */
         .print-cover {
             width: 210mm;
             height: 297mm;
@@ -249,9 +245,6 @@
             page-break-after: always;
             break-after: always;
             overflow: hidden;
-            background-color: #8D6E63;
-            z-index: 10;
-            /* 封面維持厚紙板質感 */
         }
         .print-cover h1 {
             font-size: 48pt;
@@ -275,41 +268,46 @@
             mix-blend-mode: overlay;
         }
 
-        /* 4. 內頁樣式 (A4 頁面 - 統一手寫紙風格) */
+        /* 4. 內頁樣式 (手寫紙風格強化) */
         .print-page {
             width: 210mm;
             min-height: 297mm;
-            padding: 20mm 15mm;
-            box-sizing: border-box;
+            height: auto;
+            padding: 20mm;
+            /* 調整：紙張背景色與紋理 */
+            background-color: #fdfbf7; /* 溫暖的米色紙 */
+            background-image: 
+                url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"),
+                linear-gradient(#dcdcdc 1px, transparent 1px);
+            background-size: 100px 100px, 100% 10mm; /* 紋理重複，橫線間距 10mm */
             position: relative;
             page-break-after: always;
             break-after: always;
+            box-sizing: border-box;
             font-family: 'Zen Maru Gothic', sans-serif;
-            overflow: hidden;
-            
-            /* --- 關鍵修改：將背景定義在每一頁上，確保統一 --- */
-            background-color: #fffdf5 !important; /* 米色紙張 */
-            background-image: 
-                /* 水平格線 (灰色) */
-                linear-gradient(#e5e5e5 1px, transparent 1px),
-                /* 垂直 margin 線 (柔和紅) */
-                linear-gradient(90deg, transparent 20mm, rgba(255, 150, 150, 0.4) 20mm, rgba(255, 150, 150, 0.4) calc(20mm + 1.5px), transparent calc(20mm + 1.5px)) !important;
-            
-            background-size: 100% 10mm, 100% 100% !important; /* 10mm 行高 */
-            background-repeat: repeat-y, no-repeat !important;
-            background-attachment: scroll !important; /* 確保隨頁面滾動/列印 */
-            
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
+            overflow: visible !important;
+            display: block;
+            color: #444;
         }
         
+        /* 頁面左側紅線 (Margin Line) */
+        .print-page::before {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0; left: 25mm;
+            width: 2px;
+            background-color: rgba(255, 100, 100, 0.3); /* 半透明紅線 */
+            z-index: 0;
+            height: 100%;
+        }
+
         .print-header {
             font-size: 24pt;
             font-weight: bold;
             color: #555;
-            border-bottom: 2px solid #555;
-            padding-bottom: 10px;
-            margin-bottom: 30px;
+            border-bottom: 2px dashed #888; /* 改為虛線 */
+            padding-bottom: 5px;
+            margin-bottom: 25px;
             display: flex;
             justify-content: space-between;
             align-items: baseline;
@@ -319,31 +317,34 @@
         }
         .print-header span.date {
             font-size: 14pt;
-            color: #888;
+            color: #777;
             font-weight: normal;
+            font-family: 'Zen Maru Gothic', sans-serif;
         }
 
-        /* 住宿區塊 */
+        /* 住宿區塊 - 手寫風格 */
         .print-stay {
-            background: rgba(255,255,255,0.85); /* 稍微增加不透明度 */
-            border: 2px solid #ddd;
-            border-radius: 8px;
+            background: transparent; /* 移除白色背景 */
+            border: 2px dashed #aaa; /* 改為虛線框 */
+            border-radius: 8px; /* 手繪感的圓角 (雖然 CSS 無法做真正的波浪線，但虛線已足夠) */
             padding: 15px;
             margin-bottom: 30px;
-            margin-left: 5mm; /* 稍微靠左，配合新的 Margin 線 */
+            margin-left: 10mm;
             position: relative;
             z-index: 1;
             break-inside: avoid;
             page-break-inside: avoid;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.05); /* 增加一點立體感 */
         }
         .print-stay h3 {
-            font-size: 12pt;
-            color: #888;
+            font-size: 10pt;
+            color: #8c1a30; /* 強調色 */
             margin-bottom: 5px;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
+            background-color: rgba(253, 251, 247, 0.8); /* 標題背後加一點遮罩以免與線條混淆 */
+            display: inline-block;
+            padding: 0 4px;
         }
         .print-stay div.content {
             font-size: 16pt;
@@ -351,39 +352,59 @@
             font-weight: bold;
         }
 
-        /* 行程列表 */
+        /* 行程列表 - 手寫風格 */
         .print-item {
             display: flex;
-            margin-bottom: 20px;
-            margin-left: 5mm; /* 配合 Margin 線 */
+            margin-bottom: 0; /* 緊湊排列 */
+            padding: 8px 5px;
+            margin-left: 10mm;
             position: relative;
             z-index: 1;
-            background: rgba(255,255,255,0.6); /* 貼紙感 */
-            padding: 8px;
-            border-radius: 6px;
+            background: transparent; /* 移除背景 */
+            /* 底部加虛線分隔，模擬寫在行上的感覺 */
+            border-bottom: 1px dotted #ccc; 
             break-inside: avoid;
             page-break-inside: avoid;
         }
+        /* 最後一個項目移除分隔線 */
+        .print-item:last-child {
+            border-bottom: none;
+        }
+
         .print-time-col {
-            width: 70px; 
+            width: 80px; 
             padding-right: 15px;
-            font-family: monospace;
+            font-family: 'Zen Maru Gothic', monospace; /* 改用圓體 */
             font-size: 12pt;
             font-weight: bold;
-            color: #444;
-            padding-top: 4px;
+            color: #555;
+            padding-top: 2px;
             text-align: right;
         }
         .print-content-col {
             flex: 1;
-            border-left: 2px solid #ccc;
+            border-left: 2px solid #555; /* 時間軸線實線 */
             padding-left: 20px; 
+            position: relative;
         }
+        /* 時間軸小圓點 */
+        .print-content-col::before {
+            content: '';
+            position: absolute;
+            left: -5px;
+            top: 8px;
+            width: 8px;
+            height: 8px;
+            background-color: #555;
+            border-radius: 50%;
+        }
+
         .print-title {
             font-size: 14pt;
             font-weight: bold;
             color: #222;
             margin-bottom: 2px;
+            line-height: 1.4;
         }
         .print-meta-row {
             font-size: 10pt;
@@ -391,9 +412,10 @@
             display: flex;
             gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
         }
         .print-cost {
-            font-family: monospace;
+            font-family: 'Zen Maru Gothic', monospace;
             font-weight: bold;
             color: #8c1a30;
         }
@@ -559,7 +581,7 @@
 
             <!-- 2. 內頁 -->
             <div class="print-page" v-for="(day, idx) in days" :key="idx" ref="printPages">
-                <!-- 內頁內容 -->
+                <div class="print-page-line"></div>
                 
                 <div class="print-header">
                     <span class="day-title">Day {{ idx + 1 }}</span>
@@ -574,11 +596,11 @@
                         <div v-if="day.accommodationType === 'flight'" class="flex flex-col gap-1">
                             <div class="font-bold text-lg text-gray-700">{{ day.airline }} {{ day.flightNo }}</div>
                             <div class="flex items-center gap-2 text-sm text-gray-600">
-                                <span class="font-mono bg-gray-100 px-1 rounded">{{ day.origin }}</span>
+                                <span class="font-mono bg-transparent px-1">{{ day.origin }}</span>
                                 <span class="font-mono font-bold">{{ day.time }}</span>
                                 <i class="ph-bold ph-airplane-takeoff text-gray-400"></i>
                                 <span class="font-mono font-bold">{{ day.arrivalTime }}</span>
-                                <span class="font-mono bg-gray-100 px-1 rounded">{{ day.destination }}</span>
+                                <span class="font-mono bg-transparent px-1">{{ day.destination }}</span>
                                 <span v-if="day.arrivalOffset" class="text-xs text-red-500 font-bold">(+{{ day.arrivalOffset }})</span>
                             </div>
                             <div class="text-xs text-gray-400">飛行時長: {{ day.flightDuration }}</div>
