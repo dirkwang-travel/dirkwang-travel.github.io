@@ -204,7 +204,7 @@
         /* --- Print Area (預設隱藏) --- */
         #print-area { display: none; }
 
-        /* --- PDF 列印專用樣式 (重構版) --- */
+        /* --- PDF 列印專用樣式 (修復版) --- */
         body.is-printing {
             background: white !important;
             overflow: visible !important;
@@ -222,7 +222,11 @@
 
         @media print {
             @page { size: A4; margin: 0; }
-            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body { 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+                background: white !important;
+            }
             #screen-area, .modal { display: none !important; }
             #print-area { display: block !important; }
         }
@@ -239,6 +243,7 @@
             text-align: center;
             color: white;
             page-break-after: always;
+            break-after: always;
             overflow: hidden;
         }
         .print-cover h1 {
@@ -263,16 +268,13 @@
             mix-blend-mode: overlay;
         }
 
-/* 4. 內頁樣式 (A4 頁面 - 修復版) */
+        /* 4. 內頁樣式 (A4 頁面 - 修復版) */
         .print-page {
             width: 210mm;
             min-height: 297mm; /* 確保至少一頁 */
             height: auto; /* 允許自動延伸 */
             padding: 20mm;
-            /* 強制背景顏色與圖案在列印時顯示 */
-            background-color: #fffdf5 !important; 
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
+            background-color: #fffdf5; 
             background-image: linear-gradient(#e5e5e5 1px, transparent 1px);
             background-size: 100% 10mm; 
             position: relative;
@@ -280,13 +282,10 @@
             break-after: always; /* 強制換頁 */
             box-sizing: border-box;
             font-family: 'Zen Maru Gothic', sans-serif;
-            /* 修正：允許內容跨頁背景延續的关键 */
-            -webkit-box-decoration-break: clone;
-            box-decoration-break: clone;
+            overflow: visible !important; /* 重要：允許內容溢出到下一頁 */
             display: block;
         }
         
-        /* 紅線樣式修正：確保延伸到底部 */
         .print-page::before {
             content: '';
             position: absolute;
@@ -294,7 +293,7 @@
             width: 1px;
             background-color: #ffcccc;
             z-index: 0;
-            pointer-events: none;
+            height: 100%;
         }
 
         .print-header {
@@ -309,6 +308,7 @@
             align-items: baseline;
             position: relative;
             z-index: 1;
+            break-inside: avoid; /* 避免標題被切斷 */
         }
         .print-header span.date {
             font-size: 14pt;
@@ -326,8 +326,7 @@
             margin-left: 10mm;
             position: relative;
             z-index: 1;
-            /* 防止住宿區塊被切斷 */
-            break-inside: avoid;
+            break-inside: avoid; /* 避免內容被切斷 */
             page-break-inside: avoid;
         }
         .print-stay h3 {
@@ -354,12 +353,10 @@
             background: rgba(255,255,255,0.6);
             padding: 5px;
             border-radius: 4px;
-            /* 防止單個行程被切斷 */
-            break-inside: avoid;
+            break-inside: avoid; /* 避免行程項目被切斷 */
             page-break-inside: avoid;
         }
         .print-time-col {
-            /* 調整：增加寬度與右邊距，解決「太近」的問題 */
             width: 80px; 
             padding-right: 15px;
             font-family: monospace;
@@ -372,7 +369,6 @@
         .print-content-col {
             flex: 1;
             border-left: 2px solid #ddd;
-            /* 調整：增加內距，解決「太近」的問題 */
             padding-left: 24px; 
         }
         .print-title {
@@ -402,6 +398,7 @@
         
         .print-page:last-child {
             page-break-after: auto;
+            break-after: auto;
         }
     </style>
 </head>
@@ -591,7 +588,7 @@
                     </div>
                 </div>
                 
-<!-- 行程列表 -->
+                <!-- 行程清單 -->
                 <div class="print-timeline" v-if="day.items && day.items.length > 0">
                     <div class="print-item" v-for="(item, iIdx) in day.items" :key="iIdx">
                         <div class="print-time-col">{{ item.time || '--:--' }}</div>
@@ -606,9 +603,8 @@
                         </div>
                     </div>
                 </div>
-                <!-- 修改：移除提示文字，保留空白讓背景線條顯示 -->
-                <div v-else class="w-full h-auto"></div>
-             </div>
+                <div v-else class="text-gray-400 italic text-center mt-10">No activities scheduled.</div>
+            </div>
         </div>
 
         <!-- Modals -->
@@ -702,6 +698,15 @@
 
         createApp({
             setup() {
+                // --- Fix: Timezone Helper Function ---
+                const getLocalISOString = () => {
+                    const now = new Date();
+                    // 扣除時區偏差 (例如 UTC+8，offset 是 -480 分鐘，減去負數等於加上 8 小時)
+                    const offsetMs = now.getTimezoneOffset() * 60000;
+                    const localTime = new Date(now.getTime() - offsetMs);
+                    return localTime.toISOString().split('T')[0];
+                };
+
                 const viewState = ref('shelf');
                 const viewMode = ref('list'); 
                 const showSettings = ref(false);
@@ -722,7 +727,8 @@
                 const tripList = ref([]);
                 const currentTripId = ref(null);
                 const days = ref([]);
-                const setup = ref({ destination: 'Tokyo', startDate: new Date().toISOString().split('T')[0], days: 5 });
+                // Fix: Use local time instead of UTC to avoid -1 day error
+                const setup = ref({ destination: 'Tokyo', startDate: getLocalISOString(), days: 5 });
                 const editingTrip = ref({ destination: '', startDate: '', days: 1, color: '' });
                 const googleScriptUrl = ref('');
                 const checklist = ref([]);
@@ -975,7 +981,12 @@
                     if (input.includes(' ')) { const parts = input.split(' '); hh = parseInt(parts[0]) || 0; mm = parseInt(parts[1]) || 0; } else if (/^\d+$/.test(input)) { if (input.length >= 3) { hh = parseInt(input.substring(0, input.length - 2)); mm = parseInt(input.substring(input.length - 2)); } else { hh = parseInt(input); mm = 0; } }
                     obj.flightDuration = `${hh}h ${mm.toString().padStart(2, '0')}m`;
                 };
-                const createNewTrip = () => { setup.value = { destination: '', startDate: new Date().toISOString().split('T')[0], days: 3 }; showSetupModal.value = true; showSettings.value = false; };
+                const createNewTrip = () => { 
+                    // Fix: Use getLocalISOString
+                    setup.value = { destination: '', startDate: getLocalISOString(), days: 3 }; 
+                    showSetupModal.value = true; 
+                    showSettings.value = false; 
+                };
                 const initTrip = () => {
                     if (!setup.value.destination) { alert('請輸入目的地'); return; }
                     const newId = 'trip_' + Date.now().toString(36);
@@ -1102,40 +1113,14 @@
                     
                     isExporting.value = true;
                     await nextTick();
+
+                    // Fix: Simplification. Trust browser pagination with CSS rules instead of manual JS resizing
+                    // This allows contents to flow naturally and respect 'break-after: always'
                     
-                    // 等待渲染穩定，確保高度計算準確
-                    await new Promise(resolve => setTimeout(resolve, 300));
-
-                    const testDiv = document.createElement('div');
-                    testDiv.style.height = '297mm';
-                    testDiv.style.visibility = 'hidden';
-                    testDiv.style.position = 'absolute';
-                    document.body.appendChild(testDiv);
-                    const a4HeightPx = testDiv.offsetHeight;
-                    document.body.removeChild(testDiv);
-
-                    const pages = document.querySelectorAll('.print-page');
-                    pages.forEach(page => {
-                        page.style.height = 'auto'; 
-                        // 改用 getBoundingClientRect() 獲取精確渲染高度，並加入 5px 緩衝
-                        const contentHeight = page.getBoundingClientRect().height;
-                        
-                        // 減去 1px 避免浮點數誤差導致多出一頁空白
-                        const effectiveA4Height = a4HeightPx - 1;
-                        const pageCount = Math.ceil((contentHeight + 5) / effectiveA4Height);
-                        
-                        // 確保至少一頁的高度
-                        const finalHeight = Math.max(pageCount, 1) * a4HeightPx;
-                        page.style.height = finalHeight + 'px';
-                    });
-
                     setTimeout(() => {
                         window.focus(); 
                         window.print();
                         isExporting.value = false;
-                         pages.forEach(page => {
-                            page.style.height = ''; 
-                        });
                     }, 500);
                 };
 
