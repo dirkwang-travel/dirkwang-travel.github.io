@@ -204,17 +204,11 @@
         /* --- Print Area (預設隱藏) --- */
         #print-area { display: none; }
 
-        /* --- PDF 列印專用樣式 (修復版 V2 - 統一全頁面背景) --- */
-        /* 將筆記本格線與紅線移至 body，確保整頁(包含空白處)都有背景 */
+        /* --- PDF 列印專用樣式 (修復版 V3 - 統一手寫紙風格) --- */
+        
+        /* 1. 基礎重置：隱藏 UI，顯示列印區 */
         body.is-printing {
-            background-color: #fffdf5 !important;
-            /* 組合背景：水平橫線 + 垂直紅線 */
-            background-image: 
-                linear-gradient(#e5e5e5 1px, transparent 1px),
-                linear-gradient(90deg, transparent 25mm, #ffcccc 25mm, #ffcccc calc(25mm + 1px), transparent calc(25mm + 1px)) !important;
-            background-size: 100% 10mm, 100% 100% !important;
-            background-repeat: repeat, no-repeat !important; /* 橫線重複，垂直線不重複(但因size 100%高所以會拉長) */
-            background-attachment: fixed !important; /* 類似浮水印，固定於頁面上 */
+            background-color: white !important; /* Reset body background */
             overflow: visible !important;
             height: auto !important;
             margin: 0 !important;
@@ -230,24 +224,18 @@
         }
 
         @media print {
-            @page { size: A4; margin: 0; }
+            @page { size: A4; margin: 0; } /* 無邊距，由 .print-page 控制 padding */
             body { 
                 -webkit-print-color-adjust: exact !important; 
                 print-color-adjust: exact !important; 
-                background-color: #fffdf5 !important;
-                background-image: 
-                    linear-gradient(#e5e5e5 1px, transparent 1px),
-                    linear-gradient(90deg, transparent 25mm, #ffcccc 25mm, #ffcccc calc(25mm + 1px), transparent calc(25mm + 1px)) !important;
-                background-size: 100% 10mm, 100% 100% !important;
-                background-repeat: repeat, no-repeat !important;
-                background-attachment: fixed !important;
                 margin: 0 !important;
+                background-color: white !important;
             }
             #screen-area, .modal { display: none !important; }
             #print-area { display: block !important; }
         }
 
-        /* 3. 封面樣式 (A4 滿版) */
+        /* 3. 封面樣式 (A4 滿版 - 獨立材質) */
         .print-cover {
             width: 210mm;
             height: 297mm;
@@ -261,9 +249,9 @@
             page-break-after: always;
             break-after: always;
             overflow: hidden;
-            /* 重要：封面需有不透明背景色，以遮蓋 body 的筆記本線條 */
-            background-color: #8D6E63; /* 預設值，會被 inline style 覆蓋 */
+            background-color: #8D6E63;
             z-index: 10;
+            /* 封面維持厚紙板質感 */
         }
         .print-cover h1 {
             font-size: 48pt;
@@ -287,28 +275,34 @@
             mix-blend-mode: overlay;
         }
 
-        /* 4. 內頁樣式 (A4 頁面 - 透明化) */
+        /* 4. 內頁樣式 (A4 頁面 - 統一手寫紙風格) */
         .print-page {
             width: 210mm;
-            min-height: 297mm; /* 確保至少一頁，即使內容少也會佔滿一頁 */
-            height: auto; 
-            padding: 20mm;
-            /* 移除個別背景，讓 Body 的背景透出來 */
-            background: transparent !important;
+            min-height: 297mm;
+            padding: 20mm 15mm;
+            box-sizing: border-box;
             position: relative;
             page-break-after: always;
             break-after: always;
-            box-sizing: border-box;
             font-family: 'Zen Maru Gothic', sans-serif;
-            overflow: visible !important;
-            display: block;
+            overflow: hidden;
+            
+            /* --- 關鍵修改：將背景定義在每一頁上，確保統一 --- */
+            background-color: #fffdf5 !important; /* 米色紙張 */
+            background-image: 
+                /* 水平格線 (灰色) */
+                linear-gradient(#e5e5e5 1px, transparent 1px),
+                /* 垂直 margin 線 (柔和紅) */
+                linear-gradient(90deg, transparent 20mm, rgba(255, 150, 150, 0.4) 20mm, rgba(255, 150, 150, 0.4) calc(20mm + 1.5px), transparent calc(20mm + 1.5px)) !important;
+            
+            background-size: 100% 10mm, 100% 100% !important; /* 10mm 行高 */
+            background-repeat: repeat-y, no-repeat !important;
+            background-attachment: scroll !important; /* 確保隨頁面滾動/列印 */
+            
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         
-        /* 移除原本在 .print-page 上的紅線 pseudo-element，因為已經移到 body 上了 */
-        .print-page::before {
-            display: none !important;
-        }
-
         .print-header {
             font-size: 24pt;
             font-weight: bold;
@@ -321,7 +315,7 @@
             align-items: baseline;
             position: relative;
             z-index: 1;
-            break-inside: avoid; /* 避免標題被切斷 */
+            break-inside: avoid;
         }
         .print-header span.date {
             font-size: 14pt;
@@ -331,16 +325,17 @@
 
         /* 住宿區塊 */
         .print-stay {
-            background: rgba(255,255,255,0.8);
+            background: rgba(255,255,255,0.85); /* 稍微增加不透明度 */
             border: 2px solid #ddd;
             border-radius: 8px;
             padding: 15px;
             margin-bottom: 30px;
-            margin-left: 10mm;
+            margin-left: 5mm; /* 稍微靠左，配合新的 Margin 線 */
             position: relative;
             z-index: 1;
-            break-inside: avoid; /* 避免內容被切斷 */
+            break-inside: avoid;
             page-break-inside: avoid;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.05); /* 增加一點立體感 */
         }
         .print-stay h3 {
             font-size: 12pt;
@@ -360,17 +355,17 @@
         .print-item {
             display: flex;
             margin-bottom: 20px;
-            margin-left: 10mm;
+            margin-left: 5mm; /* 配合 Margin 線 */
             position: relative;
             z-index: 1;
-            background: rgba(255,255,255,0.6);
-            padding: 5px;
-            border-radius: 4px;
-            break-inside: avoid; /* 避免行程項目被切斷 */
+            background: rgba(255,255,255,0.6); /* 貼紙感 */
+            padding: 8px;
+            border-radius: 6px;
+            break-inside: avoid;
             page-break-inside: avoid;
         }
         .print-time-col {
-            width: 80px; 
+            width: 70px; 
             padding-right: 15px;
             font-family: monospace;
             font-size: 12pt;
@@ -381,8 +376,8 @@
         }
         .print-content-col {
             flex: 1;
-            border-left: 2px solid #ddd;
-            padding-left: 24px; 
+            border-left: 2px solid #ccc;
+            padding-left: 20px; 
         }
         .print-title {
             font-size: 14pt;
@@ -564,18 +559,18 @@
 
             <!-- 2. 內頁 -->
             <div class="print-page" v-for="(day, idx) in days" :key="idx" ref="printPages">
-                <div class="print-page-line"></div>
+                <!-- 內頁內容 -->
                 
                 <div class="print-header">
                     <span class="day-title">Day {{ idx + 1 }}</span>
                     <span class="date-title">{{ day.date }}</span>
                 </div>
 
-                <!-- 住宿或過夜飛機 (Fix: 顯示完整航班資訊) -->
+                <!-- 住宿或過夜飛機 -->
                 <div v-if="day.accommodation || day.accommodationType === 'flight'" class="print-stay">
                     <h3>{{ day.accommodationType === 'flight' ? 'Overnight Flight' : 'Accommodation' }}</h3>
                     <div class="print-stay-content">
-                        <!-- Case 1: 機上過夜 - 顯示完整航班資訊 -->
+                        <!-- Case 1: 機上過夜 -->
                         <div v-if="day.accommodationType === 'flight'" class="flex flex-col gap-1">
                             <div class="font-bold text-lg text-gray-700">{{ day.airline }} {{ day.flightNo }}</div>
                             <div class="flex items-center gap-2 text-sm text-gray-600">
@@ -595,7 +590,6 @@
                             <span class="print-stay-cost" v-if="day.accommodationCost > 0">$ {{ day.accommodationCost }}</span>
                         </div>
                     </div>
-                    <!-- 補上 Flight Cost 顯示 -->
                     <div v-if="day.accommodationType === 'flight' && day.accommodationCost > 0" class="absolute top-4 right-4 print-stay-cost text-lg">
                         $ {{ day.accommodationCost }}
                     </div>
