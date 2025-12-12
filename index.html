@@ -204,19 +204,20 @@
         /* --- Print Area (預設隱藏) --- */
         #print-area { display: none; }
 
-        /* --- PDF 列印專用樣式 (修復版) --- */
-        /* 修復：將背景圖案統一設定在 body，解決分頁空白與不連貫問題 */
+        /* --- PDF 列印專用樣式 (修復版 V2 - 統一全頁面背景) --- */
+        /* 將筆記本格線與紅線移至 body，確保整頁(包含空白處)都有背景 */
         body.is-printing {
             background-color: #fffdf5 !important;
-            /* 組合背景：一層是水平灰線(格線)，一層是垂直紅線(左側) */
+            /* 組合背景：水平橫線 + 垂直紅線 */
             background-image: 
                 linear-gradient(#e5e5e5 1px, transparent 1px),
                 linear-gradient(90deg, transparent 25mm, #ffcccc 25mm, #ffcccc calc(25mm + 1px), transparent calc(25mm + 1px)) !important;
             background-size: 100% 10mm, 100% 100% !important;
+            background-repeat: repeat, no-repeat !important; /* 橫線重複，垂直線不重複(但因size 100%高所以會拉長) */
+            background-attachment: fixed !important; /* 類似浮水印，固定於頁面上 */
             overflow: visible !important;
             height: auto !important;
-            -webkit-print-color-adjust: exact !important; 
-            print-color-adjust: exact !important; 
+            margin: 0 !important;
         }
         
         body.is-printing #screen-area, 
@@ -233,12 +234,14 @@
             body { 
                 -webkit-print-color-adjust: exact !important; 
                 print-color-adjust: exact !important; 
-                /* 確保列印時 Body 擁有完整的背景與紋理 */
-                background-color: #fffdf5 !important; 
+                background-color: #fffdf5 !important;
                 background-image: 
                     linear-gradient(#e5e5e5 1px, transparent 1px),
                     linear-gradient(90deg, transparent 25mm, #ffcccc 25mm, #ffcccc calc(25mm + 1px), transparent calc(25mm + 1px)) !important;
                 background-size: 100% 10mm, 100% 100% !important;
+                background-repeat: repeat, no-repeat !important;
+                background-attachment: fixed !important;
+                margin: 0 !important;
             }
             #screen-area, .modal { display: none !important; }
             #print-area { display: block !important; }
@@ -258,7 +261,9 @@
             page-break-after: always;
             break-after: always;
             overflow: hidden;
-            /* 封面因為有背景色，會自然蓋過 Body 的格線，無需額外處理 */
+            /* 重要：封面需有不透明背景色，以遮蓋 body 的筆記本線條 */
+            background-color: #8D6E63; /* 預設值，會被 inline style 覆蓋 */
+            z-index: 10;
         }
         .print-cover h1 {
             font-size: 48pt;
@@ -282,37 +287,27 @@
             mix-blend-mode: overlay;
         }
 
-        /* 4. 內頁樣式 (A4 頁面 - 修復版) */
+        /* 4. 內頁樣式 (A4 頁面 - 透明化) */
         .print-page {
             width: 210mm;
-            min-height: 297mm; /* 確保至少一頁 */
-            height: auto; /* 允許自動延伸 */
+            min-height: 297mm; /* 確保至少一頁，即使內容少也會佔滿一頁 */
+            height: auto; 
             padding: 20mm;
-            
-            /* 移除原本個別頁面的背景設定，改由 body 繼承，確保跨頁連續性 */
-            background-color: transparent; 
-            
+            /* 移除個別背景，讓 Body 的背景透出來 */
+            background: transparent !important;
             position: relative;
             page-break-after: always;
-            break-after: always; /* 強制換頁 */
+            break-after: always;
             box-sizing: border-box;
             font-family: 'Zen Maru Gothic', sans-serif;
-            overflow: visible !important; /* 重要：允許內容溢出到下一頁 */
+            overflow: visible !important;
             display: block;
         }
         
-        /* 移除 .print-page::before (紅線)，因為已整合進 body 背景 */
-        /*
+        /* 移除原本在 .print-page 上的紅線 pseudo-element，因為已經移到 body 上了 */
         .print-page::before {
-            content: '';
-            position: absolute;
-            top: 0; bottom: 0; left: 25mm;
-            width: 1px;
-            background-color: #ffcccc;
-            z-index: 0;
-            height: 100%;
+            display: none !important;
         }
-        */
 
         .print-header {
             font-size: 24pt;
