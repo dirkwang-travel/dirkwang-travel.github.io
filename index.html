@@ -1088,12 +1088,13 @@
                     alert('旅程資訊已更新！');
                 };
                 
-                const exportToPDF = async () => {
+const exportToPDF = async () => {
                     document.title = (setup.value.destination || 'Travel Notebook') + " - " + setup.value.startDate;
                     
                     isExporting.value = true;
                     await nextTick();
 
+                    // 取得 A4 在當前螢幕下的像素高度基準
                     const testDiv = document.createElement('div');
                     testDiv.style.height = '297mm';
                     testDiv.style.visibility = 'hidden';
@@ -1104,15 +1105,32 @@
 
                     const pages = document.querySelectorAll('.print-page');
                     pages.forEach(page => {
+                        // 重置高度讓內容自然流動
                         page.style.height = 'auto'; 
+                        page.style.minHeight = '297mm'; // 確保至少有一頁 A4 高度
+
                         const contentHeight = page.scrollHeight;
                         const pageCount = Math.ceil(contentHeight / a4HeightPx);
+
+                        // 修改重點：使用 minHeight 而非 height
+                        // 若內容超過一頁，將最小高度設為 N 倍的 A4 高度
+                        // 這樣背景會填滿整頁，且若內容溢出容器會自動長高，不會疊到下一頁
                         if (pageCount > 1) {
-                            page.style.height = (pageCount * a4HeightPx - 1) + 'px';
-                        } else {
-                            page.style.height = (a4HeightPx - 1) + 'px';
+                            page.style.minHeight = (pageCount * a4HeightPx) + 'px';
                         }
                     });
+
+                    setTimeout(() => {
+                        window.focus(); 
+                        window.print();
+                        isExporting.value = false;
+                        // 列印後清除樣式，恢復原本狀態
+                         pages.forEach(page => {
+                            page.style.height = ''; 
+                            page.style.minHeight = '';
+                        });
+                    }, 500);
+                };
 
                     setTimeout(() => {
                         window.focus(); 
