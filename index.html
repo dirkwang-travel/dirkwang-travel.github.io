@@ -263,21 +263,28 @@
             mix-blend-mode: overlay;
         }
 
-        /* 4. 內頁樣式 (A4 頁面) */
+/* 4. 內頁樣式 (A4 頁面 - 修復版) */
         .print-page {
             width: 210mm;
-            min-height: 297mm; 
+            min-height: 297mm; /* 確保至少一頁 */
+            height: auto; /* 允許自動延伸 */
             padding: 20mm;
-            background-color: #fffdf5; /* 米色紙張 */
+            /* 強制背景顏色與圖案在列印時顯示 */
+            background-color: #fffdf5 !important; 
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
             background-image: linear-gradient(#e5e5e5 1px, transparent 1px);
-            background-size: 100% 10mm; /* 寬格線 */
+            background-size: 100% 10mm; 
             position: relative;
             page-break-after: always;
+            break-after: always; /* 強制換頁 */
             box-sizing: border-box;
             font-family: 'Zen Maru Gothic', sans-serif;
-            overflow: hidden;
+            overflow: visible !important; /* 重要：允許內容溢出到下一頁 */
+            display: block;
         }
         
+        /* 紅線樣式修正：確保延伸到底部 */
         .print-page::before {
             content: '';
             position: absolute;
@@ -285,7 +292,8 @@
             width: 1px;
             background-color: #ffcccc;
             z-index: 0;
-            height: 100%;
+            /* 移除 height: 100%，改用 top/bottom 確保跟隨父層高度 */
+            pointer-events: none;
         }
 
         .print-header {
@@ -576,7 +584,7 @@
                     </div>
                 </div>
                 
-                <!-- 行程清單 -->
+<!-- 行程列表 -->
                 <div class="print-timeline" v-if="day.items && day.items.length > 0">
                     <div class="print-item" v-for="(item, iIdx) in day.items" :key="iIdx">
                         <div class="print-time-col">{{ item.time || '--:--' }}</div>
@@ -591,9 +599,8 @@
                         </div>
                     </div>
                 </div>
-                <div v-else class="text-gray-400 italic text-center mt-10">No activities scheduled.</div>
-            </div>
-        </div>
+                <!-- 修改：移除提示文字，保留空白讓背景線條顯示 -->
+                <div v-else class="w-full h-auto"></div>
 
         <!-- Modals -->
         <transition name="modal">
