@@ -205,10 +205,18 @@
         #print-area { display: none; }
 
         /* --- PDF 列印專用樣式 (修復版) --- */
+        /* 修復：將背景圖案統一設定在 body，解決分頁空白與不連貫問題 */
         body.is-printing {
-            background: white !important;
+            background-color: #fffdf5 !important;
+            /* 組合背景：一層是水平灰線(格線)，一層是垂直紅線(左側) */
+            background-image: 
+                linear-gradient(#e5e5e5 1px, transparent 1px),
+                linear-gradient(90deg, transparent 25mm, #ffcccc 25mm, #ffcccc calc(25mm + 1px), transparent calc(25mm + 1px)) !important;
+            background-size: 100% 10mm, 100% 100% !important;
             overflow: visible !important;
             height: auto !important;
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
         }
         
         body.is-printing #screen-area, 
@@ -225,7 +233,12 @@
             body { 
                 -webkit-print-color-adjust: exact !important; 
                 print-color-adjust: exact !important; 
-                background: white !important;
+                /* 確保列印時 Body 擁有完整的背景與紋理 */
+                background-color: #fffdf5 !important; 
+                background-image: 
+                    linear-gradient(#e5e5e5 1px, transparent 1px),
+                    linear-gradient(90deg, transparent 25mm, #ffcccc 25mm, #ffcccc calc(25mm + 1px), transparent calc(25mm + 1px)) !important;
+                background-size: 100% 10mm, 100% 100% !important;
             }
             #screen-area, .modal { display: none !important; }
             #print-area { display: block !important; }
@@ -245,6 +258,7 @@
             page-break-after: always;
             break-after: always;
             overflow: hidden;
+            /* 封面因為有背景色，會自然蓋過 Body 的格線，無需額外處理 */
         }
         .print-cover h1 {
             font-size: 48pt;
@@ -274,9 +288,10 @@
             min-height: 297mm; /* 確保至少一頁 */
             height: auto; /* 允許自動延伸 */
             padding: 20mm;
-            background-color: #fffdf5 !important; /* 強制背景顏色 */
-            background-image: linear-gradient(#e5e5e5 1px, transparent 1px) !important; /* 強制背景圖案 */
-            background-size: 100% 10mm; 
+            
+            /* 移除原本個別頁面的背景設定，改由 body 繼承，確保跨頁連續性 */
+            background-color: transparent; 
+            
             position: relative;
             page-break-after: always;
             break-after: always; /* 強制換頁 */
@@ -284,10 +299,10 @@
             font-family: 'Zen Maru Gothic', sans-serif;
             overflow: visible !important; /* 重要：允許內容溢出到下一頁 */
             display: block;
-            -webkit-print-color-adjust: exact !important; /* 確保瀏覽器列印背景 */
-            print-color-adjust: exact !important;
         }
         
+        /* 移除 .print-page::before (紅線)，因為已整合進 body 背景 */
+        /*
         .print-page::before {
             content: '';
             position: absolute;
@@ -297,6 +312,7 @@
             z-index: 0;
             height: 100%;
         }
+        */
 
         .print-header {
             font-size: 24pt;
@@ -846,7 +862,7 @@
                                     days.value = tripData.days; setup.value = tripData.setup; checklist.value = tripData.checklist; checklistData.value = tripData.checklistData;
                                     localStorage.setItem(`trip_${id}_data`, JSON.stringify(tripData));
                                 }
-                            }).catch(e => { if (!hasLocalData) { initEmptyDays(); } }).finally(() => { isLoading.value = false; });
+                            }).catch(e => { if (!hasLocalData) initEmptyDays(); }).finally(() => { isLoading.value = false; });
                     } else { if (!hasLocalData) { initEmptyDays(); isLoading.value = false; } }
                 };
 
