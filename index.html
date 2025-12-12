@@ -601,6 +601,8 @@
                 </div>
                 <!-- 修改：移除提示文字，保留空白讓背景線條顯示 -->
                 <div v-else class="w-full h-auto"></div>
+            </div> <!-- End of print-page -->
+        </div> <!-- End of print-area -->
 
         <!-- Modals -->
         <transition name="modal">
@@ -1088,7 +1090,7 @@
                     alert('旅程資訊已更新！');
                 };
                 
-const exportToPDF = async () => {
+                const exportToPDF = async () => {
                     document.title = (setup.value.destination || 'Travel Notebook') + " - " + setup.value.startDate;
                     
                     isExporting.value = true;
@@ -1128,16 +1130,6 @@ const exportToPDF = async () => {
                          pages.forEach(page => {
                             page.style.height = ''; 
                             page.style.minHeight = '';
-                        });
-                    }, 500);
-                };
-
-                    setTimeout(() => {
-                        window.focus(); 
-                        window.print();
-                        isExporting.value = false;
-                         pages.forEach(page => {
-                            page.style.height = ''; 
                         });
                     }, 500);
                 };
